@@ -1,6 +1,5 @@
 [package]
-name = "sub_projects"
-publish = false
+name = "ra2-mix"
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "..."
