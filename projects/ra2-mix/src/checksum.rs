@@ -1,6 +1,6 @@
 //! Checksum and filename obfuscation utilities for RA2 MIX files
 
-use std::convert::TryInto;
+
 
 /// Obfuscates a filename according to RA2 MIX format rules
 /// 

@@ -31,6 +31,8 @@ pub const XCC_FILE_VERSION: u32 = 0;
 pub const XCC_ID_BYTES: &[u8] = b"XCC by Olaf van der Spek\x1a\x04\x17\x27\x10\x19\x80";
 
 /// Enum representing different games that use XCC format
+#[allow(non_camel_case_types)]
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum XCCGame {
     /// Tiberian Dawn

@@ -1,10 +1,11 @@
 //! Cryptography utilities for RA2 MIX files
 
-use blowfish::{Blowfish, BlockCipher, NewBlockCipher};
+use blowfish::{Blowfish};
 use byteorder::{LittleEndian, ReadBytesExt};
-use rsa::{BigUint, PublicKey, RsaPublicKey};
-use std::io::{Cursor, Read};
-
+use rsa::{BigUint, Pkcs1v15Encrypt, RsaPublicKey};
+use rsa::traits::PaddingScheme;
+use std::io::{Cursor};
+use blowfish::cipher::{generic_array, BlockDecrypt, KeyInit};
 use crate::constants::*;
 use crate::MixError;
 
@@ -46,7 +47,7 @@ pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Mi
         let mut block_int = BigUint::from_bytes_le(encrypted_block);
         
         // Perform RSA decryption (actually encryption with public key in this case)
-        let decrypted_int = public_key.encrypt(&mut rand::thread_rng(), rsa::PaddingScheme::NoPadding, &block_int.to_bytes_le())
+        let decrypted_int = public_key.encrypt(&mut rand::thread_rng(), Pkcs1v15Encrypt::default(), &block_int.to_bytes_le())
             .map_err(|e| MixError::CryptoError(format!("RSA decryption failed: {}", e)))?;
         
         // Remove trailing zeros
@@ -86,8 +87,8 @@ pub fn get_decryption_block_sizing(file_count: u16) -> (usize, usize) {
 /// # Returns
 /// A tuple containing the file count, data size, and decrypted index data
 pub fn decrypt_mix_header(mix_data: &[u8], key: &[u8]) -> Result<(u16, u32, Vec<u8>), MixError> {
-    // Create Blowfish cipher
-    let cipher = Blowfish::new_from_slice(key)
+    // Create Blowfish cipher with LittleEndian byte order
+    let cipher = Blowfish::<LittleEndian>::new_from_slice(key)
         .map_err(|e| MixError::CryptoError(format!("Failed to create Blowfish cipher: {}", e)))?;
     
     let header_start = SIZE_OF_FLAGS + SIZE_OF_ENCRYPTED_KEY;

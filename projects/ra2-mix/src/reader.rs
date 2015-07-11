@@ -2,18 +2,18 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
-use std::path::{Path, PathBuf};
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::path::{Path};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::checksum::ra2_crc;
 use crate::constants::*;
-use crate::crypto::{decrypt_blowfish_key, decrypt_mix_header};
+use crate::crypto::{decrypt_blowfish_key, decrypt_mix_header, get_decryption_block_sizing};
 use crate::MixError;
 
 /// MIX file header
-#[derive(Debug, Clone)]
+#[derive(Copy, Debug, Clone)]
 pub struct Header {
     /// Flags (None for old format)
     pub flags: Option<u32>,
@@ -111,15 +111,17 @@ pub fn read_file_info<P: AsRef<Path>>(mix_filepath: Option<P>, mix_data: Option<
         return Err(MixError::InvalidArgument("Cannot specify both mix_filepath and mix_data".to_string()));
     }
     
-    let mix_data_owned: Vec<u8>;
+    // 创建一个拥有所有权的变量来存储文件内容
+    let mut owned_data;
+    
+    // 确定数据来源
     let mix_data_ref = if let Some(data) = mix_data {
         data
     } else {
         let mut file = File::open(mix_filepath.unwrap())?;
-        mix_data_owned = Vec::new();
-        let mut mix_data_owned = mix_data_owned;
-        file.read_to_end(&mut mix_data_owned)?;
-        &mix_data_owned
+        owned_data = Vec::new();
+        file.read_to_end(&mut owned_data)?;
+        &owned_data
     };
     
     let mut cursor = std::io::Cursor::new(mix_data_ref);

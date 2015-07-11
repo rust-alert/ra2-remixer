@@ -1,13 +1,17 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use ra2_mix::{write, read, extract, XCCGame};
 
 #[test]
 fn test_write_and_read() {
     // 创建一个临时目录用于测试
-    let temp_dir = tempfile::tempdir().unwrap();
-    let mix_path = temp_dir.path().join("test.mix");
+    // let temp_dir = tempfile::tempdir().unwrap();
+    let temp_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    
+    let mix_path = temp_dir.join("tests/test.mix");
+    
+    println!("Test MIX file path: {:?}", mix_path);
     
     // 创建测试文件数据
     let mut file_map = HashMap::new();
@@ -19,7 +23,7 @@ fn test_write_and_read() {
         Some(&mix_path),
         XCCGame::RA2,
         Some(file_map.clone()),
-        None::<PathBuf>,
+        None::<PathBuf>.as_ref(),
         None,
     ).unwrap();
     
@@ -36,7 +40,7 @@ fn test_write_and_read() {
     assert_eq!(read_file_map.get("test2.bin").unwrap(), &vec![0, 1, 2, 3, 4, 5]);
     
     // 测试提取功能
-    let extract_dir = temp_dir.path().join("extracted");
+    let extract_dir = temp_dir.join("tests/extracted");
     extract(&mix_path, &extract_dir).unwrap();
     
     // 验证文件已提取
