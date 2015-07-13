@@ -3,7 +3,6 @@
 use blowfish::{Blowfish};
 use byteorder::{LittleEndian, ReadBytesExt};
 use rsa::{BigUint, Pkcs1v15Encrypt, RsaPublicKey};
-use rsa::traits::PaddingScheme;
 use std::io::{Cursor};
 use blowfish::cipher::{generic_array, BlockDecrypt, KeyInit};
 use crate::constants::*;
@@ -44,7 +43,7 @@ pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Mi
         let encrypted_block = &encrypted_blowfish_key[i..end];
         
         // Convert to BigUint in little-endian format
-        let mut block_int = BigUint::from_bytes_le(encrypted_block);
+        let block_int = BigUint::from_bytes_le(encrypted_block);
         
         // Perform RSA decryption (actually encryption with public key in this case)
         let decrypted_int = public_key.encrypt(&mut rand::thread_rng(), Pkcs1v15Encrypt::default(), &block_int.to_bytes_le())

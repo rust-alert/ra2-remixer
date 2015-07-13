@@ -1,38 +1,25 @@
 //! Reader module for RA2 MIX files
 
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::{Path};
+use super::*;
 
-use byteorder::{LittleEndian, ReadBytesExt};
 
-use crate::checksum::ra2_crc;
-use crate::constants::*;
-use crate::crypto::{decrypt_blowfish_key, decrypt_mix_header, get_decryption_block_sizing};
-use crate::MixError;
 
-/// MIX file header
-#[derive(Copy, Debug, Clone)]
-pub struct Header {
-    /// Flags (None for old format)
-    pub flags: Option<u32>,
-    /// Number of files in the MIX
-    pub file_count: u16,
-    /// Total size of file data
-    pub data_size: u32,
+impl XccPackage {
+    pub fn load(input: &Path) -> Result<Self, MixError> {
+        let data = std::fs::read(input)?;
+        let mut empty = XccPackage::default();
+        empty.decrypt(&data)?;
+        Ok(empty)
+    }
+    /// Reads a MIX file and returns a map of filenames to file data
+    fn decrypt(&mut self, mix_data: &[u8]) -> Result<(), MixError> {
+        let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
+        let map = get_file_map(&file_entries, &mix_data_vec, &header)?;
+        self.files = map;
+        Ok(())
+    }
 }
 
-/// MIX file entry
-#[derive(Debug, Clone, Copy)]
-pub struct FileEntry {
-    /// File ID (CRC of filename)
-    pub id: i32,
-    /// Offset in the body data
-    pub offset: u32,
-    /// Size of the file
-    pub size: u32,
-}
 
 /// Checks if a MIX header is encrypted
 fn header_is_encrypted(header: &Header) -> bool {
@@ -245,27 +232,3 @@ pub fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &Header
     Ok(filemap)
 }
 
-/// Reads a MIX file and returns a map of filenames to file data
-pub fn decrypt(mix_data: &[u8]) -> Result<HashMap<String, Vec<u8>>, MixError> {
-    
-    let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
-    
-    get_file_map(&file_entries, &mix_data_vec, &header)
-}
-
-/// Extracts a MIX file to a folder
-pub fn extract(mix_filepath: &Path, folder_path: &Path) -> Result<(), MixError> {
-    let data  = std::fs::read(mix_filepath)?;
-    let file_map = decrypt(&data)?;
-    
-    let folder = folder_path;
-    std::fs::create_dir_all(folder)?;
-    
-    for (filename, file_data) in file_map {
-        let file_path = folder.join(filename);
-        let mut file = File::create(file_path)?;
-        file.write_all(&file_data)?;
-    }
-    
-    Ok(())
-}

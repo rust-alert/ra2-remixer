@@ -1,24 +1,16 @@
 //! Writer module for RA2 MIX files
 
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{Write};
-use std::path::{Path, PathBuf};
+use super::*;
 
-use byteorder::{LittleEndian, WriteBytesExt};
 
-use crate::checksum::ra2_crc;
-use crate::constants::*;
-use crate::MixError;
-
-/// File information for MIX file creation
-#[derive(Debug, Clone)]
-struct FileInfo {
-    /// File ID (CRC of filename)
-    file_id: i32,
-    /// File data
-    data: Vec<u8>,
+impl XccPackage {
+    pub fn save(self, output: &Path) -> Result<usize, MixError> {
+        let data = encrypt(self.game, Some(self.files), None::<&Path>, None)?;
+        std::fs::write(output, &data)?;
+        Ok(data.len())
+    }
 }
+
 
 /// Creates MIX database data
 fn get_mix_db_data(filenames: &[String], game: XccGame) -> Vec<u8> {
