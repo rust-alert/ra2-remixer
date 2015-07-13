@@ -9,14 +9,16 @@
 //! This library provides functionality for reading and writing Red Alert 2 MIX files.
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
-mod checksum;
-mod constants;
-mod crypto;
-mod errors;
-mod reader;
-mod writer;
+pub mod checksum;
+pub mod constants;
+pub mod crypto;
+pub mod errors;
+pub mod reader;
+pub mod writer;
+pub mod xcc_package;
 
-pub use crate::constants::XCCGame;
+pub use crate::constants::XccGame;
 pub use crate::errors::MixError;
-pub use crate::reader::{extract, read, read_file_info, FileEntry, Header};
-pub use crate::writer::write;
+pub use crate::reader::{extract, decrypt, read_file_info, FileEntry, Header};
+pub use crate::writer::encrypt;
+pub use xcc_package::XccPackage;

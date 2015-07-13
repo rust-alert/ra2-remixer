@@ -34,7 +34,7 @@ pub const XCC_ID_BYTES: &[u8] = b"XCC by Olaf van der Spek\x1a\x04\x17\x27\x10\x
 #[allow(non_camel_case_types)]
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum XCCGame {
+pub enum XccGame {
     /// Tiberian Dawn
     TD = 0,
     /// Red Alert
@@ -71,7 +71,7 @@ pub enum XCCGame {
     UNKNOWN = 16,
 }
 
-impl Default for XCCGame {
+impl Default for XccGame {
     fn default() -> Self {
         Self::RA2
     }

@@ -21,7 +21,7 @@ struct FileInfo {
 }
 
 /// Creates MIX database data
-fn get_mix_db_data(filenames: &[String], game: XCCGame) -> Vec<u8> {
+fn get_mix_db_data(filenames: &[String], game: XccGame) -> Vec<u8> {
     let num_files = filenames.len();
     let db_size_in_bytes = XCC_HEADER_SIZE + 
         filenames.iter().map(|filename| filename.len() + 1).sum::<usize>();
@@ -50,10 +50,10 @@ fn get_mix_db_data(filenames: &[String], game: XCCGame) -> Vec<u8> {
 }
 
 /// Processes input files and creates a file map
-pub fn coalesce_input_files<P: AsRef<Path>>(
-    game: XCCGame,
+pub fn coalesce_input_files(
+    game: XccGame,
     file_map: Option<HashMap<String, Vec<u8>>>,
-    input_folder: Option<P>,
+    input_folder: Option<&Path>,
     filepaths: Option<Vec<PathBuf>>,
 ) -> Result<HashMap<String, Vec<u8>>, MixError> {
     // Validate input arguments
@@ -69,7 +69,7 @@ pub fn coalesce_input_files<P: AsRef<Path>>(
     let mut result_file_map = if let Some(map) = file_map {
         map
     } else if let Some(folder) = input_folder {
-        let folder_path = folder.as_ref();
+        let folder_path = folder;
         if !folder_path.exists() {
             return Err(MixError::FileNotFound(format!("{:?} does not exist!", folder_path)));
         }
@@ -147,11 +147,10 @@ fn create_mix_header(file_map: &HashMap<String, Vec<u8>>) -> Vec<u8> {
 }
 
 /// Writes a MIX file
-pub fn write<P: AsRef<Path>>(
-    mix_filepath: Option<P>,
-    game: XCCGame,
+pub fn encrypt(
+    game: XccGame,
     file_map: Option<HashMap<String, Vec<u8>>>,
-    folder_path: Option<P>,
+    folder_path: Option<&Path>,
     filepaths: Option<Vec<PathBuf>>,
 ) -> Result<Vec<u8>, MixError> {
     let file_map = coalesce_input_files(game, file_map, folder_path, filepaths)?;
@@ -191,12 +190,6 @@ pub fn write<P: AsRef<Path>>(
     let mut mix_data = create_mix_header(&file_map);
     mix_data.extend_from_slice(&file_entry_data);
     mix_data.extend_from_slice(&body_data);
-    
-    // Write to file if path is provided
-    if let Some(filepath) = mix_filepath {
-        let mut file = File::create(filepath)?;
-        file.write_all(&mix_data)?;
-    }
     
     Ok(mix_data)
 }

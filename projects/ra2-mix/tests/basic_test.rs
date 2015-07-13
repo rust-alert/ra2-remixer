@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-
-use ra2_mix::{write, read, extract, XCCGame};
+use std::path::{Path};
+use ra2_mix::{ extract,  XccPackage};
 
 #[test]
 fn test_write_and_read() {
@@ -14,24 +12,17 @@ fn test_write_and_read() {
     println!("Test MIX file path: {:?}", mix_path);
     
     // 创建测试文件数据
-    let mut file_map = HashMap::new();
-    file_map.insert("test1.txt".to_string(), b"Hello, World!".to_vec());
-    file_map.insert("test2.bin".to_string(), vec![0, 1, 2, 3, 4, 5]);
+    let mut file_map = XccPackage::default();
+    file_map.add_file("test1.txt".to_string(), b"Hello, World!".to_vec());
+    file_map.add_file("test2.bin".to_string(), vec![0, 1, 2, 3, 4, 5]);
     
-    // 写入MIX文件
-    let mix_data = write(
-        Some(&mix_path),
-        XCCGame::RA2,
-        Some(file_map.clone()),
-        None::<PathBuf>.as_ref(),
-        None,
-    ).unwrap();
+    file_map.dump(&mix_path);
     
     // 确保文件已创建
     assert!(mix_path.exists());
     
     // 读取MIX文件
-    let read_file_map = read(Some(&mix_path), None).unwrap();
+    let read_file_map = XccPackage::load(&mix_path).unwrap().file_map;
     
     // 验证文件内容
     assert!(read_file_map.contains_key("test1.txt"));

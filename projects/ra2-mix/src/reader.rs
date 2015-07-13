@@ -100,31 +100,9 @@ pub fn load_global_mix_database() -> Result<HashMap<String, i32>, MixError> {
 }
 
 /// Reads file information from a MIX file
-pub fn read_file_info<P: AsRef<Path>>(mix_filepath: Option<P>, mix_data: Option<&[u8]>) 
-    -> Result<(Header, Vec<FileEntry>, Vec<u8>), MixError> {
+pub fn read_file_info(mix_data: &[u8])     -> Result<(Header, Vec<FileEntry>, Vec<u8>), MixError> {
     
-    if mix_filepath.is_none() && mix_data.is_none() {
-        return Err(MixError::InvalidArgument("Must specify either mix_filepath or mix_data".to_string()));
-    }
-    
-    if mix_filepath.is_some() && mix_data.is_some() {
-        return Err(MixError::InvalidArgument("Cannot specify both mix_filepath and mix_data".to_string()));
-    }
-    
-    // 创建一个拥有所有权的变量来存储文件内容
-    let mut owned_data;
-    
-    // 确定数据来源
-    let mix_data_ref = if let Some(data) = mix_data {
-        data
-    } else {
-        let mut file = File::open(mix_filepath.unwrap())?;
-        owned_data = Vec::new();
-        file.read_to_end(&mut owned_data)?;
-        &owned_data
-    };
-    
-    let mut cursor = std::io::Cursor::new(mix_data_ref);
+    let mut cursor = std::io::Cursor::new(mix_data);
     
     // Check if this is an old format MIX file
     let first_word = cursor.read_u16::<LittleEndian>()?;
@@ -164,10 +142,10 @@ pub fn read_file_info<P: AsRef<Path>>(mix_filepath: Option<P>, mix_data: Option<
         let encrypted_key_start = SIZE_OF_FLAGS;
         let encrypted_key_end = encrypted_key_start + SIZE_OF_ENCRYPTED_KEY;
         
-        let encrypted_blowfish_key = &mix_data_ref[encrypted_key_start..encrypted_key_end];
+        let encrypted_blowfish_key = &mix_data[encrypted_key_start..encrypted_key_end];
         let decrypted_blowfish_key = decrypt_blowfish_key(encrypted_blowfish_key)?;
         
-        let (file_count, data_size, index_data) = decrypt_mix_header(mix_data_ref, &decrypted_blowfish_key)?;
+        let (file_count, data_size, index_data) = decrypt_mix_header(mix_data, &decrypted_blowfish_key)?;
         
         file_entries = get_file_entries(file_count as usize, &index_data)?;
         updated_header.file_count = file_count;
@@ -177,16 +155,16 @@ pub fn read_file_info<P: AsRef<Path>>(mix_filepath: Option<P>, mix_data: Option<
         let index_start = header_size;
         let index_end = index_start + (header.file_count as usize * FILE_ENTRY_SIZE);
         
-        if index_end > mix_data_ref.len() {
+        if index_end > mix_data.len() {
             return Err(MixError::InvalidFormat("File too small for index".to_string()));
         }
         
-        let index_data = &mix_data_ref[index_start..index_end];
+        let index_data = &mix_data[index_start..index_end];
         file_entries = get_file_entries(header.file_count as usize, index_data)?;
     }
     
     // Convert mix_data_ref to owned Vec<u8>
-    let mix_data_vec = mix_data_ref.to_vec();
+    let mix_data_vec = mix_data.to_vec();
     
     Ok((updated_header, file_entries, mix_data_vec))
 }
@@ -268,27 +246,19 @@ pub fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &Header
 }
 
 /// Reads a MIX file and returns a map of filenames to file data
-pub fn read<P: AsRef<Path>>(mix_filepath: Option<P>, mix_data: Option<&[u8]>) 
-    -> Result<HashMap<String, Vec<u8>>, MixError> {
+pub fn decrypt(mix_data: &[u8]) -> Result<HashMap<String, Vec<u8>>, MixError> {
     
-    if mix_filepath.is_none() && mix_data.is_none() {
-        return Err(MixError::InvalidArgument("Must specify either mix_filepath or mix_data".to_string()));
-    }
-    
-    if mix_filepath.is_some() && mix_data.is_some() {
-        return Err(MixError::InvalidArgument("Cannot specify both mix_filepath and mix_data".to_string()));
-    }
-    
-    let (header, file_entries, mix_data_vec) = read_file_info(mix_filepath, mix_data)?;
+    let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
     
     get_file_map(&file_entries, &mix_data_vec, &header)
 }
 
 /// Extracts a MIX file to a folder
-pub fn extract<P: AsRef<Path>, Q: AsRef<Path>>(mix_filepath: P, folder_path: Q) -> Result<(), MixError> {
-    let file_map = read(Some(mix_filepath), None)?;
+pub fn extract(mix_filepath: &Path, folder_path: &Path) -> Result<(), MixError> {
+    let data  = std::fs::read(mix_filepath)?;
+    let file_map = decrypt(&data)?;
     
-    let folder = folder_path.as_ref();
+    let folder = folder_path;
     std::fs::create_dir_all(folder)?;
     
     for (filename, file_data) in file_map {
