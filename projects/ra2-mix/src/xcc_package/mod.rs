@@ -7,7 +7,8 @@ use crate::{
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::{
     collections::HashMap,
-    io::{Seek, SeekFrom},
+    fs::File,
+    io::{Seek, SeekFrom, Write},
     path::{Path, PathBuf},
 };
 
@@ -75,10 +76,47 @@ impl XccPackage {
     }
 }
 
-/// Extracts a MIX file to a folder
+/// Extract single file from the MIX file to a folder
+///
+/// # Arguments
+///
+/// * `input`:
+/// * `output`:
+///
+/// returns: Result<(), MixError>
+///
+/// # Examples
+///
+/// ```
+/// ```
 pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
+    let xcc = XccPackage::load(input)?;
+    let file_map = xcc.files;
+    std::fs::create_dir_all(output)?;
+    for (filename, file_data) in file_map {
+        let file_path = output.join(filename);
+        let mut file = File::create(file_path)?;
+        file.write_all(&file_data)?;
+    }
+
+    Ok(())
+}
+/// Patch a folder into the MIX file
+///
+/// # Arguments
+///
+/// * `input`:
+/// * `output`:
+///
+/// returns: Result<(), MixError>
+///
+/// # Examples
+///
+/// ```
+/// ```
+pub fn patch(input: &Path, output: &Path) -> Result<(), MixError> {
     let data = std::fs::read(input)?;
-    todo!();
+
     // let file_map = decrypt(&data)?;
     //
     // let folder = folder_path;

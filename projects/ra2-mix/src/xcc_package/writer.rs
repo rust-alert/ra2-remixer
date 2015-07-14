@@ -4,10 +4,73 @@ use super::*;
 
 
 impl XccPackage {
+    /// 
+    /// 
+    /// # Arguments 
+    /// 
+    /// * `output`: 
+    ///
+    /// # Examples 
+    /// 
+    /// ```
+    /// 
+    /// ```
     pub fn save(self, output: &Path) -> Result<usize, MixError> {
-        let data = encrypt(self.game, Some(self.files), None::<&Path>, None)?;
+        let data = self.encode()?;
         std::fs::write(output, &data)?;
         Ok(data.len())
+    }
+    ///
+    ///
+    /// # Arguments 
+    ///
+    /// * `output`: 
+    ///
+    /// # Examples 
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn encode(self) -> Result<Vec<u8>, MixError> {
+        let file_map = coalesce_input_files(self.game, Some(self.files), None::<&Path>, None)?;
+
+        // Create file information list
+        let mut file_information_list: Vec<FileInfo> = file_map
+            .iter()
+            .map(|(filename, data)| FileInfo {
+                file_id: ra2_crc(filename),
+                data: data.clone(),
+            })
+            .collect();
+
+        // Sort by file ID
+        file_information_list.sort_by_key(|file_info| file_info.file_id);
+
+        // Generate file entries and body data
+        let mut offset = 0u32;
+        let mut file_entry_data = Vec::new();
+        let mut body_data = Vec::new();
+
+        for file_info in &file_information_list {
+            let size = file_info.data.len() as u32;
+
+            // Write file entry
+            file_entry_data.write_i32::<LittleEndian>(file_info.file_id)?;
+            file_entry_data.write_u32::<LittleEndian>(offset)?;
+            file_entry_data.write_u32::<LittleEndian>(size)?;
+
+            // Write file data
+            body_data.extend_from_slice(&file_info.data);
+
+            offset += size;
+        }
+
+        // Combine all parts
+        let mut mix_data = create_mix_header(&file_map);
+        mix_data.extend_from_slice(&file_entry_data);
+        mix_data.extend_from_slice(&body_data);
+
+        Ok(mix_data)
     }
 }
 
@@ -136,52 +199,4 @@ fn create_mix_header(file_map: &HashMap<String, Vec<u8>>) -> Vec<u8> {
     header.write_u32::<LittleEndian>(data_size).unwrap();
     
     header
-}
-
-/// Writes a MIX file
-pub fn encrypt(
-    game: XccGame,
-    file_map: Option<HashMap<String, Vec<u8>>>,
-    folder_path: Option<&Path>,
-    filepaths: Option<Vec<PathBuf>>,
-) -> Result<Vec<u8>, MixError> {
-    let file_map = coalesce_input_files(game, file_map, folder_path, filepaths)?;
-    
-    // Create file information list
-    let mut file_information_list: Vec<FileInfo> = file_map
-        .iter()
-        .map(|(filename, data)| FileInfo {
-            file_id: ra2_crc(filename),
-            data: data.clone(),
-        })
-        .collect();
-    
-    // Sort by file ID
-    file_information_list.sort_by_key(|file_info| file_info.file_id);
-    
-    // Generate file entries and body data
-    let mut offset = 0u32;
-    let mut file_entry_data = Vec::new();
-    let mut body_data = Vec::new();
-    
-    for file_info in &file_information_list {
-        let size = file_info.data.len() as u32;
-        
-        // Write file entry
-        file_entry_data.write_i32::<LittleEndian>(file_info.file_id).unwrap();
-        file_entry_data.write_u32::<LittleEndian>(offset).unwrap();
-        file_entry_data.write_u32::<LittleEndian>(size).unwrap();
-        
-        // Write file data
-        body_data.extend_from_slice(&file_info.data);
-        
-        offset += size;
-    }
-    
-    // Combine all parts
-    let mut mix_data = create_mix_header(&file_map);
-    mix_data.extend_from_slice(&file_entry_data);
-    mix_data.extend_from_slice(&body_data);
-    
-    Ok(mix_data)
 }

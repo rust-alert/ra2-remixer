@@ -1,5 +1,5 @@
 use std::path::{Path};
-use ra2_mix::{ extract,  XccPackage};
+use ra2_mix::{extract, XccPackage};
 
 #[test]
 fn test_write_and_read() {
@@ -31,16 +31,16 @@ fn test_write_and_read() {
     assert_eq!(read_file_map.get("test2.bin").unwrap(), &vec![0, 1, 2, 3, 4, 5]);
     
     // 测试提取功能
-    // let extract_dir = temp_dir.join("tests/extracted");
-    // extract(&mix_path, &extract_dir).unwrap();
+    let extract_dir = temp_dir.join("tests/extracted");
+    extract(&mix_path, &extract_dir).unwrap();
     
     // 验证文件已提取
-    // assert!(extract_dir.join("test1.txt").exists());
-    // assert!(extract_dir.join("test2.bin").exists());
+    assert!(extract_dir.join("test1.txt").exists());
+    assert!(extract_dir.join("test2.bin").exists());
     
     // 验证提取的文件内容
-    // let content1 = std::fs::read(extract_dir.join("test1.txt")).unwrap();
-    // let content2 = std::fs::read(extract_dir.join("test2.bin")).unwrap();
-    // assert_eq!(content1, b"Hello, World!");
-    // assert_eq!(content2, vec![0, 1, 2, 3, 4, 5]);
+    let content1 = std::fs::read(extract_dir.join("test1.txt")).unwrap();
+    let content2 = std::fs::read(extract_dir.join("test2.bin")).unwrap();
+    assert_eq!(content1, b"Hello, World!");
+    assert_eq!(content2, vec![0, 1, 2, 3, 4, 5]);
 }

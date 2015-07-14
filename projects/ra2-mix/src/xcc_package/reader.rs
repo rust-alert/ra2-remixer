@@ -5,6 +5,19 @@ use super::*;
 
 
 impl XccPackage {
+    /// 
+    /// 
+    /// # Arguments 
+    /// 
+    /// * `input`: 
+    /// 
+    /// returns: Result<XccPackage, MixError> 
+    /// 
+    /// # Examples 
+    /// 
+    /// ```
+    /// 
+    /// ```
     pub fn load(input: &Path) -> Result<Self, MixError> {
         let data = std::fs::read(input)?;
         let mut empty = XccPackage::default();
@@ -12,6 +25,18 @@ impl XccPackage {
         Ok(empty)
     }
     /// Reads a MIX file and returns a map of filenames to file data
+    ///
+    /// # Arguments 
+    ///
+    /// * `input`: 
+    ///
+    /// returns: Result<XccPackage, MixError> 
+    ///
+    /// # Examples 
+    ///
+    /// ```
+    ///
+    /// ```
     fn decrypt(&mut self, mix_data: &[u8]) -> Result<(), MixError> {
         let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
         let map = get_file_map(&file_entries, &mix_data_vec, &header)?;

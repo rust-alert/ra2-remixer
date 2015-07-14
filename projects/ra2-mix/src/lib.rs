@@ -5,18 +5,15 @@
 #![doc(html_favicon_url = "https://raw.githubusercontent.com/oovm/shape-rs/dev/projects/images/Trapezohedron.svg")]
 
 //! RA2 MIX file format library
-//! 
+//!
 //! This library provides functionality for reading and writing Red Alert 2 MIX files.
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
-pub mod checksum;
-pub mod constants;
-pub mod crypto;
-pub mod errors;
-pub mod xcc_package;
+mod checksum;
+mod constants;
+mod crypto;
+mod errors;
+mod xcc_package;
 
-pub use crate::constants::XccGame;
-pub use crate::errors::MixError;
-pub use xcc_package::reader::{read_file_info};
-pub use xcc_package::writer::encrypt;
-pub use xcc_package::{XccPackage, FileEntry, Header, extract};
+pub use crate::{constants::XccGame, errors::MixError};
+pub use xcc_package::{FileEntry, Header, XccPackage, extract, patch, reader::read_file_info};
