@@ -1,31 +1,44 @@
 //! Error types for RA2 MIX file operations
 
-use std::io;
-use thiserror::Error;
-
-/// Error type for RA2 MIX file operations
-#[derive(Error, Debug)]
-pub enum MixError {
-    /// IO error
-    #[error("IO error: {0}")]
-    IoError(#[from] io::Error),
-
-    /// Crypto error
-    #[error("Crypto error: {0}")]
-    CryptoError(String),
-
-    /// Invalid file format
-    #[error("Invalid file format: {0}")]
-    InvalidFormat(String),
-
-    /// Missing file
-    #[error("File not found: {0}")]
-    FileNotFound(String),
-
-    /// Invalid argument
-    #[error("Invalid argument: {0}")]
-    InvalidArgument(String),
-}
+mod convert;
+use std::{
+    fmt::{Display, Formatter},
+};
 
 /// Result type for RA2 MIX file operations
 pub type Result<T> = std::result::Result<T, MixError>;
+
+/// Error type for RA2 MIX file operations
+#[derive(Debug)]
+pub enum MixError {
+    /// IO error
+    IoError(std::io::Error),
+
+    /// Crypto error
+    CryptoError(String),
+
+    /// Invalid file format
+    InvalidFormat(String),
+
+    /// Missing file
+    FileNotFound(String),
+}
+
+impl Display for MixError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MixError::IoError(e) => {
+                write!(f, "IO error: {}", e)
+            }
+            MixError::CryptoError(e) => {
+                write!(f, "Crypto error:: {}", e)
+            }
+            MixError::InvalidFormat(e) => {
+                write!(f, "Invalid file format: {}", e)
+            }
+            MixError::FileNotFound(e) => {
+                write!(f, "File not found: {}", e)
+            }
+        }
+    }
+}

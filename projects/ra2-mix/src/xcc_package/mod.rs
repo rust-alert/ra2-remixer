@@ -9,7 +9,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{Seek, SeekFrom, Write},
-    path::{Path, PathBuf},
+    path::{Path},
 };
 
 pub mod reader;
@@ -74,6 +74,33 @@ impl XccPackage {
     pub fn add_any(&mut self, name: String, data: Vec<u8>) {
         self.files.insert(name, data);
     }
+
+    /// Add a file from filesystem to the package
+///
+/// # Arguments
+/// * `data` - Path to the file to add
+///
+/// # Returns
+/// Size of the added file in bytes on success, or error if file not found
+///
+/// # Examples
+/// ```no_run
+/// use ra2_mix::XccPackage;
+/// use std::path::Path;
+///
+/// let mut package = XccPackage::default();
+/// package.add_file(Path::new("test.txt")).unwrap();
+/// ```
+pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
+        if !data.is_file() {
+            return Err(MixError::FileNotFound("".to_string()));
+        }
+        let name = data.file_name().and_then(|s| s.to_str()).ok_or(MixError::FileNotFound("".to_string()))?;
+        let data = std::fs::read(data)?;
+        let size = data.len();
+        self.files.insert(name.to_string(), data);
+        Ok(size)
+    }
 }
 
 /// Extract single file from the MIX file to a folder
@@ -115,18 +142,11 @@ pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
 /// ```
 /// ```
 pub fn patch(input: &Path, output: &Path) -> Result<(), MixError> {
-    let data = std::fs::read(input)?;
-
-    // let file_map = decrypt(&data)?;
-    //
-    // let folder = folder_path;
-    // std::fs::create_dir_all(folder)?;
-    //
-    // for (filename, file_data) in file_map {
-    //     let file_path = folder.join(filename);
-    //     let mut file = File::create(file_path)?;
-    //     file.write_all(&file_data)?;
-    // }
-
+    let mut xcc = XccPackage::load(input)?;
+    for entry in std::fs::read_dir(input)? {
+        let entry = entry?;
+        xcc.add_file(&entry.path())?;
+    }
+    xcc.save(output)?;
     Ok(())
 }
