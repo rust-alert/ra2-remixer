@@ -1,92 +1,55 @@
-# RA2-Mix 库
+# RA2 MIX Library
 
-这是一个用于读取和写入红色警戒2（Red Alert 2）MIX文件格式的Rust库。MIX文件是Westwood Studios游戏中使用的资源归档格式。
+A Rust library for reading and writing Red Alert 2 MIX archive files. Supports both encrypted and unencrypted MIX formats.
 
-## 功能特性
+## Features
 
-- 读取MIX文件并提取其中的内容
-- 创建新的MIX文件
-- 支持加密和未加密的MIX文件格式
-- 支持文件名到ID的映射
-- 提供简单易用的API
+- Read and parse MIX files
+- Extract files from MIX archives
+- Support for encrypted MIX files
+- Checksum calculation for filenames
+- File operations (read/write)
 
-## 使用示例
+## Installation
 
-### 读取MIX文件
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+ra2-mix = "0.0.0"
+```
+
+## Basic Usage
 
 ```rust
-use ra2_mix::read;
+use ra2_mix::XccPackage;
 use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 从文件读取
-    let file_map = read(Some(Path::new("example.mix")), None)?;
+    // Load a MIX file
+    let mix = XccPackage::load(Path::new("example.mix"))?;
     
-    // 打印文件列表
-    for (filename, data) in &file_map {
-        println!("文件: {}, 大小: {} 字节", filename, data.len());
+    // Access files in the MIX archive
+    for (filename, data) in mix.files.iter() {
+        println!("Found file: {}", filename);
     }
     
     Ok(())
 }
 ```
 
-### 创建MIX文件
+## API Documentation
 
-```rust
-use ra2_mix::{write, XCCGame};
-use std::collections::HashMap;
-use std::path::Path;
+See the [full API documentation](https://docs.rs/ra2-mix) for detailed usage.
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 创建文件映射
-    let mut file_map = HashMap::new();
-    file_map.insert("test.txt".to_string(), b"Hello, World!".to_vec());
-    file_map.insert("data.bin".to_string(), vec![0, 1, 2, 3, 4, 5]);
-    
-    // 写入MIX文件
-    write(
-        Some(Path::new("output.mix")),
-        XCCGame::RA2,
-        Some(file_map),
-        None::<&Path>,
-        None,
-    )?;
-    
-    println!("MIX文件已创建!");
-    Ok(())
-}
-```
+## Examples
 
-### 提取MIX文件到目录
+Check the `examples/` directory for complete usage examples:
 
-```rust
-use ra2_mix::extract;
-use std::path::Path;
+1. `basic.rs` - Basic MIX file operations
+2. `encrypted.rs` - Working with encrypted MIX files
+3. `extract.rs` - Extracting files from MIX archives
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 提取MIX文件到目录
-    extract(
-        Path::new("example.mix"),
-        Path::new("extracted_files"),
-    )?;
-    
-    println!("文件已提取到 'extracted_files' 目录");
-    Ok(())
-}
-```
+## License
 
-## 安装
-
-将以下内容添加到你的`Cargo.toml`文件中：
-
-```toml
-[dependencies]
-ra2-mix = "0.1.0"
-```
-
-## 功能标志
-
-- `serde-support` - 启用对全局MIX数据库的序列化/反序列化支持
-
-## 许可证
+MPL-2.0
