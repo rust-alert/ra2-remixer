@@ -9,21 +9,24 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{Seek, SeekFrom, Write},
-    path::{Path},
+    path::Path,
 };
 
 pub mod reader;
 pub mod writer;
 
+/// MIX package
 #[derive(Debug)]
-pub struct XccPackage {
+pub struct MixPackage {
+    /// The game version of the MIX package
     pub game: XccGame,
+    /// A map of file names to file data
     pub files: HashMap<String, Vec<u8>>,
 }
 
 /// MIX file header
 #[derive(Copy, Debug, Clone)]
-pub struct Header {
+struct MixHeader {
     /// Flags (None for old format)
     pub flags: Option<u32>,
     /// Number of files in the MIX
@@ -34,7 +37,7 @@ pub struct Header {
 
 /// MIX file entry
 #[derive(Debug, Clone, Copy)]
-pub struct FileEntry {
+struct FileEntry {
     /// File ID (CRC of filename)
     pub id: i32,
     /// Offset in the body data
@@ -51,13 +54,13 @@ struct FileInfo {
     data: Vec<u8>,
 }
 
-impl Default for XccPackage {
+impl Default for MixPackage {
     fn default() -> Self {
         Self { game: XccGame::RA2, files: Default::default() }
     }
 }
 
-impl XccPackage {
+impl MixPackage {
     /// Add any file to the MIX package, no matter if it is valid or not.
     ///
     /// # Arguments
@@ -68,7 +71,7 @@ impl XccPackage {
     /// # Examples
     ///
     /// ```
-    /// let mut mix = ra2_mix::XccPackage::default();
+    /// let mut mix = ra2_mix::MixPackage::default();
     /// mix.add_any("hello.txt".to_string(), b"Hello, World!".to_vec());
     /// ```
     pub fn add_any(&mut self, name: String, data: Vec<u8>) {
@@ -76,22 +79,22 @@ impl XccPackage {
     }
 
     /// Add a file from filesystem to the package
-///
-/// # Arguments
-/// * `data` - Path to the file to add
-///
-/// # Returns
-/// Size of the added file in bytes on success, or error if file not found
-///
-/// # Examples
-/// ```no_run
-/// use ra2_mix::XccPackage;
-/// use std::path::Path;
-///
-/// let mut package = XccPackage::default();
-/// package.add_file(Path::new("test.txt")).unwrap();
-/// ```
-pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
+    ///
+    /// # Arguments
+    /// * `data` - Path to the file to add
+    ///
+    /// # Returns
+    /// Size of the added file in bytes on success, or error if file not found
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use ra2_mix::MixPackage;
+    /// use std::path::Path;
+    ///
+    /// let mut package = MixPackage::default();
+    /// package.add_file(Path::new("test.txt")).unwrap();
+    /// ```
+    pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
         if !data.is_file() {
             return Err(MixError::FileNotFound("".to_string()));
         }
@@ -117,7 +120,7 @@ pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
 /// ```
 /// ```
 pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
-    let xcc = XccPackage::load(input)?;
+    let xcc = MixPackage::load(input)?;
     let file_map = xcc.files;
     std::fs::create_dir_all(output)?;
     for (filename, file_data) in file_map {
@@ -142,7 +145,7 @@ pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
 /// ```
 /// ```
 pub fn patch(input: &Path, output: &Path) -> Result<(), MixError> {
-    let mut xcc = XccPackage::load(input)?;
+    let mut xcc = MixPackage::load(input)?;
     for entry in std::fs::read_dir(input)? {
         let entry = entry?;
         xcc.add_file(&entry.path())?;

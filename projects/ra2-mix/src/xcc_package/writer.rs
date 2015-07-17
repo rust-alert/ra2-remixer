@@ -2,7 +2,7 @@
 
 use super::*;
 
-impl XccPackage {
+impl MixPackage {
     /// # Arguments
     ///
     /// * `output`:

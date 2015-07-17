@@ -18,5 +18,5 @@ mod xcc_package;
 pub use crate::{
     constants::XccGame,
     errors::{MixError, Result},
+    xcc_package::{MixPackage, extract, patch},
 };
-pub use xcc_package::{FileEntry, Header, XccPackage, extract, patch, reader::read_file_info};

@@ -1,11 +1,11 @@
 //! Example of working with encrypted RA2 MIX files
 
-use ra2_mix::XccPackage;
+use ra2_mix::{MixError, MixPackage};
 use std::path::Path;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), MixError> {
     // Load an encrypted MIX file
-    let mix = XccPackage::load(Path::new("encrypted.mix"))?;
+    let mix = MixPackage::load(Path::new("encrypted.mix"))?;
     
     // Check if the file is encrypted
     if mix.files.is_empty() {

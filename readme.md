@@ -36,25 +36,15 @@ ra2-mix patch input_directory output.mix
 use ra2_mix::XccPackage;
 
 // Load a MIX file
-let mut package = XccPackage::load(Path::new("input.mix"))?;
+let mut package = XccPackage::load(Path::new("input.mix")) ?;
 
 // Add a file to the package
-package.add_file(Path::new("new_file.txt"))?;
+package.add_file(Path::new("new_file.txt")) ?;
 
 // Save the modified package
-package.save(Path::new("output.mix"))?;
+package.save(Path::new("output.mix")) ?;
 ```
 
-## Contributing
+## Reference Projects
 
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
-
-## License
-
-MIT
+- [XCC Utilities for RA2](https://xhp.xwis.net/)

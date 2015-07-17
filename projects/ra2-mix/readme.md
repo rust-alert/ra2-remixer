@@ -21,13 +21,13 @@ ra2-mix = "0.0.0"
 
 ## Basic Usage
 
-```rust
-use ra2_mix::XccPackage;
+```rust,no_run
+use ra2_mix::{MixPackage,MixError};
 use std::path::Path;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), MixError> {
     // Load a MIX file
-    let mix = XccPackage::load(Path::new("example.mix"))?;
+    let mix = MixPackage::load(Path::new("example.mix"))?;
     
     // Access files in the MIX archive
     for (filename, data) in mix.files.iter() {
@@ -49,7 +49,3 @@ Check the `examples/` directory for complete usage examples:
 1. `basic.rs` - Basic MIX file operations
 2. `encrypted.rs` - Working with encrypted MIX files
 3. `extract.rs` - Extracting files from MIX archives
-
-## License
-
-MPL-2.0

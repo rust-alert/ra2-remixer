@@ -27,7 +27,7 @@ tempfile = "3.8"
 
 [features]
 default = []
-serde-support = ["serde", "serde_json"]
+serde_json = ["dep:serde", "dep:serde_json"]
 
 [package.metadata.docs.rs]
 all-features = true
