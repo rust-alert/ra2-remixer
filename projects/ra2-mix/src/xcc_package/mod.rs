@@ -41,9 +41,9 @@ struct FileEntry {
     /// File ID (CRC of filename)
     pub id: i32,
     /// Offset in the body data
-    pub offset: u32,
+    pub offset: i32,
     /// Size of the file
-    pub size: u32,
+    pub size: i32,
 }
 /// File information for MIX file creation
 #[derive(Debug, Clone)]

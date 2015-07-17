@@ -5,7 +5,7 @@ use std::path::Path;
 
 fn main() -> Result<(), MixError> {
     // Load an encrypted MIX file
-    let mix = MixPackage::load(Path::new("encrypted.mix"))?;
+    let mix = MixPackage::load(Path::new("E:\\RTS\\Mental Omega\\expandmo99.mix"))?;
     
     // Check if the file is encrypted
     if mix.files.is_empty() {

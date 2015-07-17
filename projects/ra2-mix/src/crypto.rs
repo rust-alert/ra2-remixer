@@ -26,6 +26,10 @@ pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Mi
         10,
     )
     .ok_or(MixError::CryptoError("Failed to parse public modulus".to_string()))?;
+    
+    println!("HEX KEY: {:?}", public_modulus.to_bytes_le());
+    
+    let _ = BigUint::from_bytes_le(public_modulus.to_bytes_le().as_slice());
 
     if encrypted_blowfish_key.len() < SIZE_OF_ENCRYPTED_KEY {
         return Err(MixError::CryptoError("Buffer is not long enough".to_string()));

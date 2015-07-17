@@ -48,9 +48,8 @@ fn get_file_entries(file_count: usize, index_data: &[u8]) -> Result<Vec<FileEntr
 
     for _ in 0..file_count {
         let id = cursor.read_i32::<LittleEndian>()?;
-        let offset = cursor.read_u32::<LittleEndian>()?;
-        let size = cursor.read_u32::<LittleEndian>()?;
-
+        let offset = cursor.read_i32::<LittleEndian>()?;
+        let size = cursor.read_i32::<LittleEndian>()?;
         file_entries.push(FileEntry { id, offset, size });
     }
 
@@ -167,6 +166,7 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
     }
 
     let mix_db_id = ra2_crc(MIX_DB_FILENAME);
+    debug_assert_eq!(mix_db_id, 0x366E051F);
 
     // Calculate body start position
     let mut body_start =
@@ -188,10 +188,14 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
 
     let mix_body_data = &mix_data[body_start..];
 
+
     // Get filename to ID mapping
     let id_filename_map: HashMap<i32, String>;
 
     if let Some(db_entry) = local_mix_db_file_entry {
+        if db_entry.offset < 0 { 
+            return Err(MixError::InvalidFormat("This `mix` file is protected".to_string()));
+        }
         // Use local mix database
         let local_mix_db_data = get_file_data_from_mix_body(&db_entry, mix_body_data);
         let filenames = get_filenames_from_mix_db(&local_mix_db_data);
@@ -199,6 +203,7 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
         id_filename_map = filenames.iter().map(|filename| (ra2_crc(filename), filename.clone())).collect();
     }
     else {
+        println!("No local mix database found, please add global mix database");
         // Use global mix database
         #[cfg(feature = "serde_json")]
         {
