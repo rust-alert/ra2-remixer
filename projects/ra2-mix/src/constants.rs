@@ -33,7 +33,8 @@ pub const XCC_ID_BYTES: &[u8] = b"XCC by Olaf van der Spek\x1a\x04\x17\x27\x10\x
 /// Enum representing different games that use XCC format
 #[allow(non_camel_case_types)]
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The C&C Game Version
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum XccGame {
     /// Tiberian Dawn
     TD = 0,
@@ -46,6 +47,7 @@ pub enum XccGame {
     /// Dune 2000
     DUNE2000 = 4,
     /// Red Alert 2
+    #[default]
     RA2 = 5,
     /// Red Alert 2: Yuri's Revenge
     RA2_YR = 6,
@@ -69,10 +71,4 @@ pub enum XccGame {
     TS_FS = 15,
     /// Unknown game
     UNKNOWN = 16,
-}
-
-impl Default for XccGame {
-    fn default() -> Self {
-        Self::RA2
-    }
 }

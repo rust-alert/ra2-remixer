@@ -16,7 +16,7 @@ pub mod reader;
 pub mod writer;
 
 /// MIX package
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct MixPackage {
     /// The game version of the MIX package
     pub game: XccGame,
@@ -52,12 +52,6 @@ struct FileInfo {
     file_id: i32,
     /// File data
     data: Vec<u8>,
-}
-
-impl Default for MixPackage {
-    fn default() -> Self {
-        Self { game: XccGame::RA2, files: Default::default() }
-    }
 }
 
 impl MixPackage {
@@ -96,7 +90,7 @@ impl MixPackage {
     /// ```
     pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
         if !data.is_file() {
-            return Err(MixError::FileNotFound("".to_string()));
+            return Err(MixError::FileNotFound("must file".to_string()));
         }
         let name = data.file_name().and_then(|s| s.to_str()).ok_or(MixError::FileNotFound("".to_string()))?;
         let data = std::fs::read(data)?;
@@ -128,7 +122,6 @@ pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
         let mut file = File::create(file_path)?;
         file.write_all(&file_data)?;
     }
-
     Ok(())
 }
 /// Patch a folder into the MIX file

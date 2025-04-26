@@ -1,9 +1,7 @@
 //! Error types for RA2 MIX file operations
 
 mod convert;
-use std::{
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
 /// Result type for RA2 MIX file operations
 pub type Result<T> = std::result::Result<T, MixError>;
@@ -15,7 +13,10 @@ pub enum MixError {
     IoError(std::io::Error),
 
     /// Crypto error
-    CryptoError(String),
+    CryptoError {
+        /// The error message
+        message: String,
+    },
 
     /// Invalid file format
     InvalidFormat(String),
@@ -30,7 +31,7 @@ impl Display for MixError {
             MixError::IoError(e) => {
                 write!(f, "IO error: {}", e)
             }
-            MixError::CryptoError(e) => {
+            MixError::CryptoError { message: e } => {
                 write!(f, "Crypto error:: {}", e)
             }
             MixError::InvalidFormat(e) => {

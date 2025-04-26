@@ -82,7 +82,7 @@ fn get_filenames_from_mix_db(mix_db_file_data: &[u8]) -> Vec<String> {
 
 /// Extracts file data from MIX body
 fn get_file_data_from_mix_body(file_entry: &FileEntry, mix_body_data: &[u8]) -> Vec<u8> {
-    println!("File entry: {:?}", file_entry);
+    tracing::trace!("FileEntry: {:?}", file_entry);
     let start = file_entry.offset as usize;
     let end = start + file_entry.size as usize;
 

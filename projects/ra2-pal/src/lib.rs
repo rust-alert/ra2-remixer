@@ -24,11 +24,11 @@ pub struct Palette {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Ra2Color {
-    /// 红色分量
+    /// red
     pub red: u8,
-    /// 绿色分量
+    /// green
     pub green: u8,
-    /// 蓝色分量
+    /// blue
     pub blue: u8,
 }
 
