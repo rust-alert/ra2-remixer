@@ -1,7 +1,7 @@
 //! Basic example of using RA2 MIX library
 
 use ra2_shp::ShpReader;
-use ra2_types::{MixError, Rgba, RgbaImage};
+use ra2_types::{MixError};
 use std::fs::File;
 use ra2_pal::Palette;
 

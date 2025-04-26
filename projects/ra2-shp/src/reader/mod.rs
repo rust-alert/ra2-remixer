@@ -51,7 +51,7 @@ impl ShpFrame {
         self.flags = reader.read_u8()?;
         reader.read_exact(&mut self.reserved1)?;
         self.color = reader.read_u32::<LittleEndian>()?;
-        self.reserved2 = reader.read_u32::<LittleEndian>()?;
+        reader.read_exact(&mut self.reserved2)?;
         self.offset = reader.read_u32::<LittleEndian>()?;
         Ok(())
     }

@@ -3,6 +3,7 @@
 use ra2_mix::{MixError, MixPackage};
 use std::path::Path;
 use std::fs;
+use ra2_types::MixError;
 
 fn main() -> Result<(), MixError> {
     // Load a MIX file

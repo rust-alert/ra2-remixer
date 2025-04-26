@@ -2,6 +2,7 @@
 
 use ra2_mix::{MixError, MixPackage};
 use std::path::Path;
+use ra2_types::MixError;
 
 fn main() -> Result<(), MixError> {
     // Load an encrypted MIX file

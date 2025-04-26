@@ -10,10 +10,17 @@
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
 mod colors;
+mod reader;
 
 pub use crate::colors::Ra2Color;
 use ra2_types::MixError;
 use serde::{Deserialize, Serialize};
+use std::io::BufReader;
+
+#[derive(Debug)]
+pub struct PaletteReader<R> {
+    reader: BufReader<R>,
+}
 
 /// `PAL` files contain color palettes for various objects in the game.
 #[repr(C)]
@@ -43,8 +50,10 @@ impl Palette {
     }
 
     /// 获取指定索引的颜色
-    pub fn get_color(&self, index: usize) -> Option<Ra2Color> {
-        if index < 256 { Some(self.colors[index]) } else { None }
+    pub fn get_color(&self, index: u8) -> Result<Ra2Color, MixError> {
+        match self.colors.get(index as usize) {
+            Some(s) => Ok(*s),
+            None => Err(MixError::InvalidFormat("超出范围".to_string())),
+        }
     }
 }
-

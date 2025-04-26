@@ -9,7 +9,6 @@
 //! This library provides functionality for reading and writing Red Alert 2 MIX files.
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
-use std::io::Seek;
 
 mod frames;
 mod reader;

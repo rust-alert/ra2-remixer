@@ -3,8 +3,6 @@
 #[cfg(feature = "image")]
 mod from_image;
 
-use std::error::Error;
-use std::fmt::{Display, Formatter};
 use crate::MixError;
 
 impl From<std::io::Error> for MixError {
