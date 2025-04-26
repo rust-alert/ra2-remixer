@@ -3,6 +3,8 @@ resolver = "2"
 members = ["projects/*"]
 default-members = [
     "projects/ra2-mix",
+    "projects/ra2-pal",
+    "projects/ra2-shp",
     "projects/ra2-types"
 ]
 exclude = [

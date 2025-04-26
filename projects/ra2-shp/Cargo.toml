@@ -1,0 +1,36 @@
+[package]
+name = "ra2-shp"
+version = "0.0.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Parser for Red Alert 2 shape files (*.shp)"
+categories = ["rust-patterns"]
+homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-mix"
+repository = "https://github.com/rust-alert/ra2-remixer"
+documentation = "https://docs.rs/ra2-mix"
+readme = "readme.md"
+license = "MPL-2.0"
+edition = "2021"
+exclude = ["package.json", "tests/**"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+image = { version = "0.25"}
+byteorder = {version = "1"}
+
+[dependencies.ra2-pal]
+version = "0.0.0"
+path = "../ra2-pal"
+
+[dependencies.ra2-types]
+version = "0.0.0"
+path = "../ra2-types"
+
+[dev-dependencies]
+tempfile = "3.8"
+
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true
