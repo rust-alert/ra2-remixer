@@ -11,7 +11,7 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn save(self, output: &Path) -> Result<usize, MixError> {
+    pub fn save(self, output: &Path) -> Result<usize, Ra2Error> {
         let data = self.encode()?;
         std::fs::write(output, &data)?;
         Ok(data.len())
@@ -24,7 +24,7 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn encode(self) -> Result<Vec<u8>, MixError> {
+    pub fn encode(self) -> Result<Vec<u8>, Ra2Error> {
         let file_map = coalesce_input_files(self.game, &self.files)?;
 
         // Create file information list
@@ -91,7 +91,7 @@ fn get_mix_db_data(filenames: &[String], game: XccGame) -> Vec<u8> {
 }
 
 /// Processes input files and creates a file map
-pub fn coalesce_input_files(game: XccGame, file_map: &HashMap<String, Vec<u8>>) -> Result<HashMap<String, Vec<u8>>, MixError> {
+pub fn coalesce_input_files(game: XccGame, file_map: &HashMap<String, Vec<u8>>) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
     let mut extra_file_map = file_map.clone();
     // Get filenames and create mix database
     let mut filenames: Vec<String> = extra_file_map.keys().cloned().collect();
@@ -103,7 +103,7 @@ pub fn coalesce_input_files(game: XccGame, file_map: &HashMap<String, Vec<u8>>) 
 }
 
 /// Creates a MIX file header
-fn create_mix_header(file_map: &HashMap<String, Vec<u8>>) -> Result<Vec<u8>, MixError> {
+fn create_mix_header(file_map: &HashMap<String, Vec<u8>>) -> Result<Vec<u8>, Ra2Error> {
     let flags = 0u32;
     let file_count = file_map.len() as u16;
     let data_size = file_map.values().map(|data| data.len() as u32).sum();

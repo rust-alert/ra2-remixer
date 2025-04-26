@@ -1,6 +1,6 @@
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use byteorder::{LittleEndian, ReadBytesExt};
-use ra2_types::MixError;
+use ra2_types::Ra2Error;
 use crate::{ShpFrame, ShpHeader};
 
 #[derive(Debug)]
@@ -10,7 +10,7 @@ pub struct ShpReader<R> {
 }
 
 impl<R: Read> ShpReader<R> {
-    pub fn new(buffer: R) -> Result<Self, MixError> {
+    pub fn new(buffer: R) -> Result<Self, Ra2Error> {
         let mut reader = BufReader::new(buffer);
         let file_header = read_file_header(&mut reader)?;
         Ok(Self { header: file_header, reader })
@@ -18,7 +18,7 @@ impl<R: Read> ShpReader<R> {
     pub fn header(&self) -> &ShpHeader {
         &self.header
     }
-    pub fn read_frame(&mut self) -> Result<ShpFrame, MixError>
+    pub fn read_frame(&mut self) -> Result<ShpFrame, Ra2Error>
     where
         R: Seek,
     {
@@ -32,7 +32,7 @@ impl<R: Read> ShpReader<R> {
 
 
 // 读取文件头
-pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, MixError> {
+pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, Ra2Error> {
     let reserved = reader.read_u16::<LittleEndian>()?;
     let width = reader.read_u16::<LittleEndian>()?;
     let height = reader.read_u16::<LittleEndian>()?;
@@ -43,7 +43,7 @@ pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, MixError> 
 
 impl ShpFrame {
     // 读取帧头
-    fn read_frame_header<R: Read>(&mut self, reader: &mut R) -> Result<(), MixError> {
+    fn read_frame_header<R: Read>(&mut self, reader: &mut R) -> Result<(), Ra2Error> {
         self.x = reader.read_u16::<LittleEndian>()?;
         self.y = reader.read_u16::<LittleEndian>()?;
         self.width = reader.read_u16::<LittleEndian>()?;
@@ -56,7 +56,7 @@ impl ShpFrame {
         Ok(())
     }
     // 读取帧数据
-    fn read_frame_data<R: Read + Seek>(&mut self, reader: &mut R) -> Result<(), MixError> {
+    fn read_frame_data<R: Read + Seek>(&mut self, reader: &mut R) -> Result<(), Ra2Error> {
         // 如果偏移量为 0，则表示空帧
         if self.offset == 0 {
             return Ok(());
@@ -81,7 +81,7 @@ impl ShpFrame {
 }
 
 // 解压缩 RLE 数据
-pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, MixError> {
+pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, Ra2Error> {
     let mut decompressed_data = Vec::new();
     let mut row_length_buffer = [0u8; 2];
 

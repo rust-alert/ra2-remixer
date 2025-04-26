@@ -2,9 +2,9 @@
 
 use ra2_mix::{MixError, MixPackage};
 use std::path::Path;
-use ra2_types::MixError;
+use ra2_types::Ra2Error;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     // Load an encrypted MIX file
     let mix = MixPackage::load(Path::new("E:\\RTS\\Mental Omega\\expandmo99.mix"))?;
     

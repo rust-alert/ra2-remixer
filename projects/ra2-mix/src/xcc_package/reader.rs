@@ -13,7 +13,7 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn load(mix_path: &Path) -> Result<Self, MixError> {
+    pub fn load(mix_path: &Path) -> Result<Self, Ra2Error> {
         let data = std::fs::read(mix_path)?;
         MixPackage::decode(&data)
     }
@@ -29,7 +29,7 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn decode(mix_data: &[u8]) -> Result<Self, MixError> {
+    pub fn decode(mix_data: &[u8]) -> Result<Self, Ra2Error> {
         let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
         let map = get_file_map(&file_entries, &mix_data_vec, &header)?;
         Ok(Self { game: Default::default(), files: map })
@@ -42,7 +42,7 @@ fn header_is_encrypted(header: &MixHeader) -> bool {
 }
 
 /// Parses file entries from index data
-fn get_file_entries(file_count: usize, index_data: &[u8]) -> Result<Vec<FileEntry>, MixError> {
+fn get_file_entries(file_count: usize, index_data: &[u8]) -> Result<Vec<FileEntry>, Ra2Error> {
     let mut file_entries = Vec::with_capacity(file_count);
     let mut cursor = std::io::Cursor::new(index_data);
 
@@ -91,14 +91,14 @@ fn get_file_data_from_mix_body(file_entry: &FileEntry, mix_body_data: &[u8]) -> 
 
 /// Loads the global mix database
 #[cfg(feature = "serde_json")]
-pub fn load_global_mix_database() -> Result<HashMap<String, i32>, MixError> {
+pub fn load_global_mix_database() -> Result<HashMap<String, i32>, Ra2Error> {
     // In a real implementation, this would load from an embedded resource
     // For now, we'll return an empty map
     Ok(HashMap::new())
 }
 
 /// Reads file information from a MIX file
-fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>), MixError> {
+fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>), Ra2Error> {
     let mut cursor = std::io::Cursor::new(mix_data);
 
     // Check if this is an old format MIX file
@@ -147,7 +147,7 @@ fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>
         let index_end = index_start + (header.file_count as usize * FILE_ENTRY_SIZE);
 
         if index_end > mix_data.len() {
-            return Err(MixError::InvalidFormat("File too small for index".to_string()));
+            return Err(Ra2Error::InvalidFormat { message: "File too small for index".to_string() });
         }
 
         let index_data = &mix_data[index_start..index_end];
@@ -161,7 +161,7 @@ fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>
 }
 
 /// Creates a file map from file entries and mix data
-fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader) -> Result<HashMap<String, Vec<u8>>, MixError> {
+fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
     if file_entries.len() <= 1 {
         return Ok(HashMap::new());
     }
@@ -195,7 +195,7 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
 
     if let Some(db_entry) = local_mix_db_file_entry {
         if db_entry.offset < 0 { 
-            return Err(MixError::InvalidFormat("This `mix` file is protected".to_string()));
+            return Err(Ra2Error::InvalidFormat { message: "This `mix` file is protected".to_string() });
         }
         // Use local mix database
         let local_mix_db_data = get_file_data_from_mix_body(&db_entry, mix_body_data);

@@ -1,8 +1,8 @@
-use crate::MixError;
+use crate::Ra2Error;
 use image::ImageError;
 
-impl From<ImageError> for MixError {
+impl From<ImageError> for Ra2Error {
     fn from(error: ImageError) -> Self {
-        Self::InvalidFormat(error.to_string())
+        Self::InvalidFormat { message: error.to_string() }
     }
 }

@@ -1,9 +1,9 @@
 //! Basic example of using RA2 MIX library
 
-use ra2_mix::{MixError, MixPackage};
+use ra2_mix::{Ra2Error, MixPackage};
 use std::path::Path;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     // Load a MIX file
     let mix = MixPackage::load(Path::new("example.mix"))?;
     

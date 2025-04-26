@@ -11,17 +11,19 @@
 
 mod errors;
 
-use std::error::Error;
-use std::fmt::{Display, Formatter};
 #[cfg(feature = "image")]
 pub use image::{Rgba, RgbaImage};
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
 
 /// Result type for RA2 MIX file operations
-pub type Result<T> = std::result::Result<T, MixError>;
+pub type Result<T> = std::result::Result<T, Ra2Error>;
 
 /// Error type for RA2 MIX file operations
 #[derive(Debug)]
-pub enum MixError {
+pub enum Ra2Error {
     /// IO error
     IoError(std::io::Error),
 
@@ -32,28 +34,50 @@ pub enum MixError {
     },
 
     /// Invalid file format
-    InvalidFormat(String),
-
+    InvalidFormat {
+        /// The error message
+        message: String,
+    },
+    /// Encode error
+    EncodeError {
+        /// The error format
+        format: String,
+        /// The error message
+        message: String,
+    },
+    /// Decode error
+    DecodeError {
+        /// The error format
+        format: String,
+        /// The error message
+        message: String,
+    },
     /// Missing file
     FileNotFound(String),
 }
 
-impl Error for MixError { }
+impl Error for Ra2Error {}
 
-impl Display for MixError {
+impl Display for Ra2Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            MixError::IoError(e) => {
+            Ra2Error::IoError(e) => {
                 write!(f, "IO error: {}", e)
             }
-            MixError::CryptoError { message: e } => {
+            Ra2Error::CryptoError { message: e } => {
                 write!(f, "Crypto error:: {}", e)
             }
-            MixError::InvalidFormat(e) => {
+            Ra2Error::InvalidFormat { message: e } => {
                 write!(f, "Invalid file format: {}", e)
             }
-            MixError::FileNotFound(e) => {
+            Ra2Error::FileNotFound(e) => {
                 write!(f, "File not found: {}", e)
+            }
+            Ra2Error::DecodeError { format, message } => {
+                write!(f, "Decode error: {}: {}", format, message)
+            }
+            Ra2Error::EncodeError { format, message } => {
+                write!(f, "Encode error: {}: {}", format, message)
             }
         }
     }

@@ -1,9 +1,9 @@
 //! Example of working with encrypted RA2 MIX files
 
-use ra2_mix::{MixError, MixPackage};
+use ra2_mix::{Ra2Error, MixPackage};
 use std::path::Path;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     // Load an encrypted MIX file
     let mix = MixPackage::load(Path::new("E:\\Games\\Red Alert 2 - Yuris Revenge\\ra2.mix"))?;
     

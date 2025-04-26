@@ -24,11 +24,6 @@ impl From<Ra2Color> for Rgba<u8> {
     }
 }
 
-/// 将 6 位颜色值转换为 8 位颜色值 (将值乘以 255/63)
-pub fn convert_6bit_to_8bit(color: u8) -> u8 {
-    ((color as u32 * 255) / 63) as u8
-}
-
 /// 将 8 位颜色值转换为 5 位或 6 位颜色值 (分别用于红/蓝和绿)
 pub fn convert_8bit_to_5or6bit(color: u8, is_green: bool) -> u8 {
     let divider = if is_green { 4 } else { 8 };

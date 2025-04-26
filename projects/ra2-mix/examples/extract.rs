@@ -1,10 +1,10 @@
 //! Example of extracting files from RA2 MIX archives
 
-use ra2_mix::{MixError, MixPackage};
+use ra2_mix::{Ra2Error, MixPackage};
 use std::path::Path;
 use std::fs;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     // Load a MIX file
     let mix = MixPackage::load(Path::new("example.mix"))?;
     

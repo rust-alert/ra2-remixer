@@ -1,5 +1,5 @@
 use crate::{
-    MixError, XccGame,
+    Ra2Error, XccGame,
     checksum::ra2_crc,
     constants::*,
     crypto::{decrypt_blowfish_key, decrypt_mix_header, get_decryption_block_sizing},
@@ -88,11 +88,11 @@ impl MixPackage {
     /// let mut package = MixPackage::default();
     /// package.add_file(Path::new("test.txt")).unwrap();
     /// ```
-    pub fn add_file(&mut self, data: &Path) -> Result<usize, MixError> {
+    pub fn add_file(&mut self, data: &Path) -> Result<usize, Ra2Error> {
         if !data.is_file() {
-            return Err(MixError::FileNotFound("must file".to_string()));
+            return Err(Ra2Error::FileNotFound("must file".to_string()));
         }
-        let name = data.file_name().and_then(|s| s.to_str()).ok_or(MixError::FileNotFound("".to_string()))?;
+        let name = data.file_name().and_then(|s| s.to_str()).ok_or(Ra2Error::FileNotFound("".to_string()))?;
         let data = std::fs::read(data)?;
         let size = data.len();
         self.files.insert(name.to_string(), data);
@@ -113,7 +113,7 @@ impl MixPackage {
 ///
 /// ```
 /// ```
-pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
+pub fn extract(input: &Path, output: &Path) -> Result<(), Ra2Error> {
     let xcc = MixPackage::load(input)?;
     let file_map = xcc.files;
     std::fs::create_dir_all(output)?;
@@ -137,7 +137,7 @@ pub fn extract(input: &Path, output: &Path) -> Result<(), MixError> {
 ///
 /// ```
 /// ```
-pub fn patch(input: &Path, output: &Path) -> Result<(), MixError> {
+pub fn patch(input: &Path, output: &Path) -> Result<(), Ra2Error> {
     let mut xcc = MixPackage::load(input)?;
     for entry in std::fs::read_dir(input)? {
         let entry = entry?;

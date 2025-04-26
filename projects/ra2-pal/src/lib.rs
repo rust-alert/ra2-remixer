@@ -13,14 +13,9 @@ mod colors;
 mod reader;
 
 pub use crate::colors::Ra2Color;
-use ra2_types::MixError;
+use ra2_types::Ra2Error;
 use serde::{Deserialize, Serialize};
-use std::io::BufReader;
-
-#[derive(Debug)]
-pub struct PaletteReader<R> {
-    reader: BufReader<R>,
-}
+use std::io::Read;
 
 /// `PAL` files contain color palettes for various objects in the game.
 #[repr(C)]
@@ -33,9 +28,9 @@ pub struct Palette {
 
 impl Palette {
     /// 从字节数组创建 PalFile 实例
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, MixError> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Ra2Error> {
         if bytes.len() != 256 * 3 {
-            return Err(MixError::InvalidFormat("字节数组长度不正确，PAL 文件应为 256 * 3 字节".to_string()));
+            return Err(Ra2Error::InvalidFormat { message: "字节数组长度不正确，PAL 文件应为 256 * 3 字节".to_string() });
         }
 
         let mut colors: [Ra2Color; 256] = [Ra2Color { red: 0, green: 0, blue: 0 }; 256];
@@ -50,10 +45,10 @@ impl Palette {
     }
 
     /// 获取指定索引的颜色
-    pub fn get_color(&self, index: u8) -> Result<Ra2Color, MixError> {
+    pub fn get_color(&self, index: u8) -> Result<Ra2Color, Ra2Error> {
         match self.colors.get(index as usize) {
             Some(s) => Ok(*s),
-            None => Err(MixError::InvalidFormat("超出范围".to_string())),
+            None => Err(Ra2Error::InvalidFormat { message: "超出范围".to_string() }),
         }
     }
 }

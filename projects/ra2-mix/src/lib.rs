@@ -14,7 +14,7 @@ mod constants;
 mod crypto;
 mod xcc_package;
 
-pub use ra2_types::{MixError, Result};
+pub use ra2_types::{Ra2Error, Result};
 
 pub use crate::{
     constants::XccGame,

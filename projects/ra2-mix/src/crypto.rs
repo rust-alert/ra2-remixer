@@ -1,6 +1,6 @@
 //! Cryptography utilities for RA2 MIX files
 
-use crate::{MixError, constants::*};
+use crate::{Ra2Error, constants::*};
 use blowfish::{
     Blowfish,
     cipher::{BlockDecrypt, KeyInit, generic_array},
@@ -16,7 +16,7 @@ use std::io::Cursor;
 ///
 /// # Returns
 /// The decrypted Blowfish key or an error if decryption fails
-pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, MixError> {
+pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Ra2Error> {
     const BLOCK_SIZE: usize = 40;
     // 65537
     let public_exponent = BigUint::from_bytes_le(&[1, 0, 1]);
@@ -26,7 +26,7 @@ pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Mi
         63, 113, 81, 214, 96, 81, 86, 228, 252, 57, 109, 8, 218, 188, 81,
     ]);
     if encrypted_blowfish_key.len() < SIZE_OF_ENCRYPTED_KEY {
-        return Err(MixError::CryptoError { message: "Length of blowfish key must > 80".to_string() });
+        return Err(Ra2Error::CryptoError { message: "Length of blowfish key must > 80".to_string() });
     }
     let mut decrypted_blowfish_key = Vec::new();
     // Process each 40-byte block
@@ -54,10 +54,10 @@ pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, Mi
 ///
 /// # Returns
 /// A tuple containing the file count, data size, and decrypted index data
-pub fn decrypt_mix_header(mix_data: &[u8], key: &[u8]) -> Result<(u16, u32, Vec<u8>), MixError> {
+pub fn decrypt_mix_header(mix_data: &[u8], key: &[u8]) -> Result<(u16, u32, Vec<u8>), Ra2Error> {
     // Create Blowfish cipher with LittleEndian byte order
     let cipher = Blowfish::<BigEndian>::new_from_slice(key)
-        .map_err(|e| MixError::CryptoError { message: format!("Failed to create Blowfish cipher: {}", e) })?;
+        .map_err(|e| Ra2Error::CryptoError { message: format!("Failed to create Blowfish cipher: {}", e) })?;
     let header_start = SIZE_OF_FLAGS + SIZE_OF_ENCRYPTED_KEY;
 
     // Decrypt the first block

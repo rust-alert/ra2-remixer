@@ -1,5 +1,5 @@
 use ra2_pal::{Palette, Ra2Color};
-use ra2_types::{MixError, Rgba, RgbaImage};
+use ra2_types::{Ra2Error, Rgba, RgbaImage};
 
 // 帧头结构体
 #[derive(Clone, Debug, Default)]
@@ -17,7 +17,7 @@ pub struct ShpFrame {
 }
 
 impl ShpFrame {
-    pub fn render(&self, palette: Palette) -> Result<RgbaImage, MixError> {
+    pub fn render(&self, palette: Palette) -> Result<RgbaImage, Ra2Error> {
         let mut image = RgbaImage::new(self.width as u32, self.height as u32);
         for (x, y, pixel) in image.enumerate_pixels_mut() {
             let index = x + y * self.width as u32;

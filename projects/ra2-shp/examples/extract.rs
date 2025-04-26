@@ -3,9 +3,9 @@
 use ra2_mix::{MixError, MixPackage};
 use std::path::Path;
 use std::fs;
-use ra2_types::MixError;
+use ra2_types::Ra2Error;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     // Load a MIX file
     let mix = MixPackage::load(Path::new("example.mix"))?;
     

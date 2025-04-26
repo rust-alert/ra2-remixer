@@ -1,11 +1,11 @@
 //! Basic example of using RA2 MIX library
 
 use ra2_shp::ShpReader;
-use ra2_types::{MixError};
+use ra2_types::{Ra2Error};
 use std::fs::File;
 use ra2_pal::Palette;
 
-fn main() -> Result<(), MixError> {
+fn main() -> Result<(), Ra2Error> {
     let pal = include_bytes!(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\gls.pal"#);
     // 打开文件
     let file = File::open(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\glsl.shp"#)?;
