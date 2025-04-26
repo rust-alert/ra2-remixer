@@ -9,6 +9,10 @@
 //! This library provides functionality for reading and writing Red Alert 2 MIX files.
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
+mod colors;
+
+pub use crate::colors::Ra2Color;
+use ra2_types::MixError;
 use serde::{Deserialize, Serialize};
 
 /// `PAL` files contain color palettes for various objects in the game.
@@ -20,23 +24,11 @@ pub struct Palette {
     pub colors: [Ra2Color; 256],
 }
 
-/// The palette color used in game
-#[repr(C)]
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub struct Ra2Color {
-    /// red
-    pub red: u8,
-    /// green
-    pub green: u8,
-    /// blue
-    pub blue: u8,
-}
-
 impl Palette {
     /// 从字节数组创建 PalFile 实例
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, MixError> {
         if bytes.len() != 256 * 3 {
-            return Err("字节数组长度不正确，PAL 文件应为 256 * 3 字节".to_string());
+            return Err(MixError::InvalidFormat("字节数组长度不正确，PAL 文件应为 256 * 3 字节".to_string()));
         }
 
         let mut colors: [Ra2Color; 256] = [Ra2Color { red: 0, green: 0, blue: 0 }; 256];
@@ -56,13 +48,3 @@ impl Palette {
     }
 }
 
-/// 将 6 位颜色值转换为 8 位颜色值 (将值乘以 255/63)
-pub fn convert_6bit_to_8bit(color: u8) -> u8 {
-    ((color as u32 * 255) / 63) as u8
-}
-
-/// 将 8 位颜色值转换为 5 位或 6 位颜色值 (分别用于红/蓝和绿)
-pub fn convert_8bit_to_5or6bit(color: u8, is_green: bool) -> u8 {
-    let divider = if is_green { 4 } else { 8 };
-    (color as u32 / divider) as u8
-}
