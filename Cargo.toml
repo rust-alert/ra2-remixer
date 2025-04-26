@@ -3,6 +3,7 @@ resolver = "2"
 members = ["projects/*"]
 default-members = [
     "projects/ra2-mix",
+    "projects/ra2-types"
 ]
 exclude = [
     "projects/.DS_Store",

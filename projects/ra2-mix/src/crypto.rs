@@ -6,7 +6,7 @@ use blowfish::{
     cipher::{BlockDecrypt, KeyInit, generic_array},
 };
 use byteorder::{LittleEndian, ReadBytesExt};
-use rsa::{BigUint, Pkcs1v15Encrypt, RsaPublicKey};
+use num::BigUint;
 use std::io::Cursor;
 
 /// Decrypts the Blowfish key from the encrypted key in the MIX file header
@@ -18,51 +18,31 @@ use std::io::Cursor;
 /// The decrypted Blowfish key or an error if decryption fails
 pub fn decrypt_blowfish_key(encrypted_blowfish_key: &[u8]) -> Result<Vec<u8>, MixError> {
     const BLOCK_SIZE: usize = 40;
-    const PUBLIC_EXPONENT: u32 = 65537;
-
-    // RA2 public modulus
-    let public_modulus = BigUint::parse_bytes(
-        b"681994811107118991598552881669230523074742337494683459234572860554038768387821901289207730765589",
-        10,
-    )
-    .ok_or(MixError::CryptoError("Failed to parse public modulus".to_string()))?;
-    
-    println!("HEX KEY: {:?}", public_modulus.to_bytes_le());
-    
-    let _ = BigUint::from_bytes_le(public_modulus.to_bytes_le().as_slice());
-
+    // 65537
+    let public_exponent = BigUint::from_bytes_le(&[1, 0, 1]);
+    // 681994811107118991598552881669230523074742337494683459234572860554038768387821901289207730765589
+    let public_modulus = BigUint::from_bytes_le(&[
+        21, 127, 67, 170, 61, 79, 251, 209, 230, 193, 176, 248, 106, 14, 221, 171, 74, 176, 130, 102, 250, 84, 170, 232, 162,
+        63, 113, 81, 214, 96, 81, 86, 228, 252, 57, 109, 8, 218, 188, 81,
+    ]);
     if encrypted_blowfish_key.len() < SIZE_OF_ENCRYPTED_KEY {
-        return Err(MixError::CryptoError("Buffer is not long enough".to_string()));
+        return Err(MixError::CryptoError("Length of blowfish key must > 80".to_string()));
     }
-
-    // Create RSA public key
-    let public_key = RsaPublicKey::new(public_modulus, BigUint::from(PUBLIC_EXPONENT))
-        .map_err(|e| MixError::CryptoError(format!("Failed to create RSA key: {}", e)))?;
-
     let mut decrypted_blowfish_key = Vec::new();
-
     // Process each 40-byte block
     for i in (0..SIZE_OF_ENCRYPTED_KEY).step_by(BLOCK_SIZE) {
         let end = std::cmp::min(i + BLOCK_SIZE, encrypted_blowfish_key.len());
         let encrypted_block = &encrypted_blowfish_key[i..end];
-
-        // Convert to BigUint in little-endian format
         let block_int = BigUint::from_bytes_le(encrypted_block);
-
         // Perform RSA decryption (actually encryption with public key in this case)
-        let decrypted_int = public_key
-            .encrypt(&mut rand::thread_rng(), Pkcs1v15Encrypt::default(), &block_int.to_bytes_le())
-            .map_err(|e| MixError::CryptoError(format!("RSA decryption failed: {}", e)))?;
-
-        // Remove trailing zeros
-        let mut decrypted = decrypted_int.to_vec();
+        let decrypted_int = block_int.modpow(&public_exponent, &public_modulus);
+        let mut decrypted = decrypted_int.to_bytes_le();
+        // Trim end zeros
         while let Some(&0) = decrypted.last() {
             decrypted.pop();
         }
-
         decrypted_blowfish_key.extend_from_slice(&decrypted);
     }
-
     Ok(decrypted_blowfish_key)
 }
 
@@ -157,4 +137,25 @@ pub fn get_decryption_block_sizing(file_count: u16) -> (usize, usize) {
     let decrypt_size = remaining_index_len + padding_size;
 
     (decrypt_size, padding_size)
+}
+
+#[test]
+fn rsa_keys() {
+    // RA2 public exponent
+    let public_exponent = BigUint::parse_bytes(b"65537", 10).unwrap();
+    assert_eq!(public_exponent.to_bytes_le(), &[1, 0, 1]);
+
+    let public_modulus = BigUint::parse_bytes(
+        b"681994811107118991598552881669230523074742337494683459234572860554038768387821901289207730765589",
+        10,
+    )
+    .unwrap();
+    // RA2 public modulus
+    assert_eq!(
+        public_modulus.to_bytes_le(),
+        &[
+            21, 127, 67, 170, 61, 79, 251, 209, 230, 193, 176, 248, 106, 14, 221, 171, 74, 176, 130, 102, 250, 84, 170, 232,
+            162, 63, 113, 81, 214, 96, 81, 86, 228, 252, 57, 109, 8, 218, 188, 81,
+        ]
+    );
 }
