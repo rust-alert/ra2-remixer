@@ -10,14 +10,21 @@
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
 use byteorder::{LittleEndian, ReadBytesExt};
+use ra2_types::MixError;
 use std::{
     error::Error,
-    io::{Read, Seek, SeekFrom},
+    io::{BufReader, Read, Seek, SeekFrom},
 };
+
+#[derive(Debug)]
+pub struct ShpReader<R> {
+    header: ShpHeader,
+    reader: BufReader<R>,
+}
 
 // 文件头结构体
 #[derive(Copy, Clone, Debug)]
-pub struct FileHeader {
+pub struct ShpHeader {
     pub reserved: u16,         // 保留字 (必须为 0)
     pub width: u16,            // 宽度
     pub height: u16,           // 高度
@@ -25,8 +32,8 @@ pub struct FileHeader {
 }
 
 // 帧头结构体
-#[derive(Copy, Clone, Debug)]
-pub struct FrameHeader {
+#[derive(Clone, Debug, Default)]
+pub struct ShpFrame {
     pub x: u16,             // 水平位置 (0,0)
     pub y: u16,             // 垂直位置 (0,0)
     pub width: u16,         // 帧宽度
@@ -36,36 +43,79 @@ pub struct FrameHeader {
     pub color: u32,         // 颜色 (可以是透明色)
     pub reserved2: u32,     // 保留字2 (未使用)
     pub offset: u32,        // 帧数据在文件中的偏移量
+    pub buffer: Vec<u8>,
+}
+impl<R: Read> ShpReader<R> {
+    pub fn new(buffer: R) -> Result<Self, MixError> {
+        let mut reader = BufReader::new(buffer);
+        let file_header = read_file_header(&mut reader)?;
+        Ok(Self { header: file_header, reader })
+    }
+    pub fn header(&self) -> &ShpHeader {
+        &self.header
+    }
+    pub fn read_frame(&mut self) -> Result<ShpFrame, MixError>
+    where
+        R: Seek,
+    {
+        let mut buffer = ShpFrame::default();
+        buffer.read_frame_header(&mut self.reader)?;
+        buffer.read_frame_data(&mut self.reader)?;
+        Ok(buffer)
+    }
 }
 
 // 读取文件头
-pub fn read_file_header<R: Read>(reader: &mut R) -> Result<FileHeader, Box<dyn Error>> {
+pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, MixError> {
     let reserved = reader.read_u16::<LittleEndian>()?;
     let width = reader.read_u16::<LittleEndian>()?;
     let height = reader.read_u16::<LittleEndian>()?;
     let number_of_frames = reader.read_u16::<LittleEndian>()?;
 
-    Ok(FileHeader { reserved, width, height, number_of_frames })
+    Ok(ShpHeader { reserved, width, height, number_of_frames })
 }
 
-// 读取帧头
-pub fn read_frame_header<R: Read>(reader: &mut R) -> Result<FrameHeader, Box<dyn Error>> {
-    let x = reader.read_u16::<LittleEndian>()?;
-    let y = reader.read_u16::<LittleEndian>()?;
-    let width = reader.read_u16::<LittleEndian>()?;
-    let height = reader.read_u16::<LittleEndian>()?;
-    let flags = reader.read_u8()?;
-    let mut align = [0u8; 3];
-    reader.read_exact(&mut align)?;
-    let color = reader.read_u32::<LittleEndian>()?;
-    let reserved2 = reader.read_u32::<LittleEndian>()?;
-    let offset = reader.read_u32::<LittleEndian>()?;
+impl ShpFrame {
+    // 读取帧头
+    fn read_frame_header<R: Read>(&mut self, reader: &mut R) -> Result<(), MixError> {
+        self.x = reader.read_u16::<LittleEndian>()?;
+        self.y = reader.read_u16::<LittleEndian>()?;
+        self.width = reader.read_u16::<LittleEndian>()?;
+        self.height = reader.read_u16::<LittleEndian>()?;
+        self.flags = reader.read_u8()?;
+        reader.read_exact(&mut self.reserved1)?;
+        self.color = reader.read_u32::<LittleEndian>()?;
+        self.reserved2 = reader.read_u32::<LittleEndian>()?;
+        self.offset = reader.read_u32::<LittleEndian>()?;
+        Ok(())
+    }
+    // 读取帧数据
+    fn read_frame_data<R: Read + Seek>(&mut self, reader: &mut R) -> Result<(), MixError> {
+        // 如果偏移量为 0，则表示空帧
+        if self.offset == 0 {
+            return Ok(());
+        }
 
-    Ok(FrameHeader { x, y, width, height, flags, reserved1: align, color, reserved2, offset })
+        // 跳转到帧数据的偏移位置
+        reader.seek(SeekFrom::Start(self.offset as u64))?;
+
+        // 检查是否使用压缩
+        if self.flags & 0x02 != 0 {
+            // 使用 RLE 压缩
+            self.buffer = decompress_rle_data(reader, self.width, self.height)?;
+        }
+        else {
+            // 未压缩
+            let frame_size = self.width as u32 * self.height as u32;
+            self.buffer = vec![0u8; frame_size as usize];
+            reader.read_exact(&mut self.buffer)?;
+        }
+        Ok(())
+    }
 }
 
 // 解压缩 RLE 数据
-pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, Box<dyn Error>> {
+pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, MixError> {
     let mut decompressed_data = Vec::new();
     let mut row_length_buffer = [0u8; 2];
 
@@ -93,29 +143,4 @@ pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_heig
     }
 
     Ok(decompressed_data)
-}
-
-// 读取帧数据
-pub fn read_frame_data<R: Read + Seek>(reader: &mut R, frame_header: &FrameHeader) -> Result<Vec<u8>, Box<dyn Error>> {
-    // 如果偏移量为 0，则表示空帧
-    if frame_header.offset == 0 {
-        return Ok(Vec::new());
-    }
-
-    // 跳转到帧数据的偏移位置
-    reader.seek(SeekFrom::Start(frame_header.offset as u64))?;
-
-    // 检查是否使用压缩
-    if frame_header.flags & 0x02 != 0 {
-        // 使用 RLE 压缩
-        let decompressed_data = decompress_rle_data(reader, frame_header.width, frame_header.height)?;
-        Ok(decompressed_data)
-    }
-    else {
-        // 未压缩
-        let frame_size = frame_header.width as u32 * frame_header.height as u32;
-        let mut frame_data = vec![0u8; frame_size as usize];
-        reader.read_exact(&mut frame_data)?;
-        Ok(frame_data)
-    }
 }

@@ -13,7 +13,7 @@ edition = "2021"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
-
+image = { version = "0.25.6", optional = true}
 
 [dev-dependencies]
 

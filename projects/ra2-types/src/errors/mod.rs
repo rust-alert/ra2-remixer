@@ -1,45 +1,14 @@
 //! Error types for RA2 MIX file operations
 
-mod convert;
+#[cfg(feature = "image")]
+mod from_image;
+
+use std::error::Error;
 use std::fmt::{Display, Formatter};
+use crate::MixError;
 
-/// Result type for RA2 MIX file operations
-pub type Result<T> = std::result::Result<T, MixError>;
-
-/// Error type for RA2 MIX file operations
-#[derive(Debug)]
-pub enum MixError {
-    /// IO error
-    IoError(std::io::Error),
-
-    /// Crypto error
-    CryptoError {
-        /// The error message
-        message: String,
-    },
-
-    /// Invalid file format
-    InvalidFormat(String),
-
-    /// Missing file
-    FileNotFound(String),
-}
-
-impl Display for MixError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MixError::IoError(e) => {
-                write!(f, "IO error: {}", e)
-            }
-            MixError::CryptoError { message: e } => {
-                write!(f, "Crypto error:: {}", e)
-            }
-            MixError::InvalidFormat(e) => {
-                write!(f, "Invalid file format: {}", e)
-            }
-            MixError::FileNotFound(e) => {
-                write!(f, "File not found: {}", e)
-            }
-        }
+impl From<std::io::Error> for MixError {
+    fn from(error: std::io::Error) -> Self {
+        Self::IoError(error)
     }
 }
