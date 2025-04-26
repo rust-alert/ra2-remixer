@@ -21,6 +21,10 @@ blowfish = "0.9"
 rsa = "0.9"
 rand = "0.8.5"
 
+[dependencies.ra2-types]
+version = "0.0.0"
+path = "../ra2-types"
+
 [dev-dependencies]
 tempfile = "3.8"
 

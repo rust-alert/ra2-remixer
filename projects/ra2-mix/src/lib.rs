@@ -12,11 +12,11 @@
 mod checksum;
 mod constants;
 mod crypto;
-mod errors;
 mod xcc_package;
+
+pub use ra2_types::{MixError, Result};
 
 pub use crate::{
     constants::XccGame,
-    errors::{MixError, Result},
     xcc_package::{MixPackage, extract, patch},
 };

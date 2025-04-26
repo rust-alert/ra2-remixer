@@ -1,8 +1,8 @@
 [package]
-name = "ra2-types"
+name = "ra2-pal"
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "Shared types definitions for Red Alert 2"
+description = "Parser for Red Alert 2 palette files (*.pal)"
 categories = ["rust-patterns"]
 homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-mix"
 repository = "https://github.com/rust-alert/ra2-remixer"
@@ -13,9 +13,15 @@ edition = "2021"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+image = { version = "0.25"}
 
+[dependencies.ra2-types]
+version = "0.0.0"
+path = "../ra2-types"
 
 [dev-dependencies]
+tempfile = "3.8"
 
 
 [features]
