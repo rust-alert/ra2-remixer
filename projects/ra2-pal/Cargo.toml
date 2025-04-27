@@ -1,6 +1,6 @@
 [package]
 name = "ra2-pal"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Aster <192607617@qq.com>"]
 description = "Parser for Red Alert 2 palette files (*.pal)"
 categories = ["game-development"]
@@ -13,8 +13,8 @@ edition = "2021"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-image = { version = "0.25"}
+serde = { version = "1.0.219", features = ["derive"] }
+image = { version = "0.24.0", default-features = false }
 
 [dependencies.ra2-types]
 version = "0.0.1"

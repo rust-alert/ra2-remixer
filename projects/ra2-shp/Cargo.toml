@@ -1,6 +1,6 @@
 [package]
 name = "ra2-shp"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Aster <192607617@qq.com>"]
 description = "Parser for Red Alert 2 shape files (*.shp)"
 categories = ["game-development"]
@@ -13,11 +13,12 @@ edition = "2021"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
+apng = { version = "0.3.4" }
 serde = { version = "1.0", features = ["derive"] }
 byteorder = {version = "1"}
 
 [dependencies.ra2-pal]
-version = "0.0.0"
+version = "0.0.1"
 path = "../ra2-pal"
 
 [dependencies.ra2-types]

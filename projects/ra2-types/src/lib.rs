@@ -14,7 +14,7 @@ mod games;
 
 pub use crate::games::CncGame;
 #[cfg(feature = "image")]
-pub use image::{Rgba, RgbaImage};
+pub use image::{Rgba, RgbaImage, DynamicImage};
 use std::{
     error::Error,
     fmt::{Display, Formatter},

@@ -9,11 +9,13 @@
 //! This library provides functionality for reading and writing Red Alert 2 MIX files.
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
-
 mod frames;
 mod reader;
 
-pub use crate::{frames::ShpFrame, reader::ShpReader};
+pub use crate::{
+    frames::ShpFrame,
+    reader::{ShpReader, shp2png},
+};
 
 // 文件头结构体
 #[derive(Copy, Clone, Debug)]

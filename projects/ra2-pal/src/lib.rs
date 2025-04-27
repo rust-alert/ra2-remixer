@@ -15,6 +15,7 @@ mod reader;
 pub use crate::colors::Ra2Color;
 use ra2_types::Ra2Error;
 use serde::Serialize;
+use std::path::Path;
 
 /// `PAL` files contain color palettes for various objects in the game.
 #[repr(C)]
@@ -26,8 +27,12 @@ pub struct Palette {
 }
 
 impl Palette {
+    pub fn load(path: &Path) -> Result<Self, Ra2Error> {
+        let bytes = std::fs::read(path)?;
+        Self::decode(&bytes)
+    }
     /// 从字节数组创建 PalFile 实例
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Ra2Error> {
+    pub fn decode(bytes: &[u8]) -> Result<Self, Ra2Error> {
         if bytes.len() != 256 * 3 {
             return Err(Ra2Error::InvalidFormat {
                 message: "字节数组长度不正确，PAL 文件应为 256 * 3 字节".to_string()

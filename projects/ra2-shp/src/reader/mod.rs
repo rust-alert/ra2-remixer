@@ -1,7 +1,13 @@
-use std::io::{BufReader, Read, Seek, SeekFrom};
-use byteorder::{LittleEndian, ReadBytesExt};
-use ra2_types::Ra2Error;
 use crate::{ShpFrame, ShpHeader};
+use byteorder::{LittleEndian, ReadBytesExt};
+use ra2_pal::Palette;
+use ra2_types::Ra2Error;
+use std::{
+    ffi::OsStr,
+    fs::File,
+    io::{BufReader, Read, Seek, SeekFrom},
+    path::Path,
+};
 
 #[derive(Debug)]
 pub struct ShpReader<R> {
@@ -13,6 +19,7 @@ impl<R: Read> ShpReader<R> {
     pub fn new(buffer: R) -> Result<Self, Ra2Error> {
         let mut reader = BufReader::new(buffer);
         let file_header = read_file_header(&mut reader)?;
+        println!("File Header: {:?}", file_header);
         Ok(Self { header: file_header, reader })
     }
     pub fn header(&self) -> &ShpHeader {
@@ -29,8 +36,6 @@ impl<R: Read> ShpReader<R> {
     }
 }
 
-
-
 // 读取文件头
 pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, Ra2Error> {
     let reserved = reader.read_u16::<LittleEndian>()?;
@@ -42,7 +47,6 @@ pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, Ra2Error> 
 }
 
 impl ShpFrame {
-    // 读取帧头
     fn read_frame_header<R: Read>(&mut self, reader: &mut R) -> Result<(), Ra2Error> {
         self.x = reader.read_u16::<LittleEndian>()?;
         self.y = reader.read_u16::<LittleEndian>()?;
@@ -64,17 +68,19 @@ impl ShpFrame {
 
         // 跳转到帧数据的偏移位置
         reader.seek(SeekFrom::Start(self.offset as u64))?;
-
+        println!("width: {:?}", self);
         // 检查是否使用压缩
-        if self.flags & 0x02 != 0 {
-            // 使用 RLE 压缩
-            self.buffer = decompress_rle_data(reader, self.width, self.height)?;
-        }
-        else {
+        if self.flags & 0x02 == 0 {
+            println!("FAST");
             // 未压缩
             let frame_size = self.width as u32 * self.height as u32;
             self.buffer = vec![0u8; frame_size as usize];
             reader.read_exact(&mut self.buffer)?;
+        }
+        else {
+            println!("RLE");
+            // 使用 RLE 压缩
+            self.buffer = decompress_rle_data(reader, self.width, self.height)?;
         }
         Ok(())
     }
@@ -84,11 +90,12 @@ impl ShpFrame {
 pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, Ra2Error> {
     let mut decompressed_data = Vec::with_capacity(frame_width as usize * frame_height as usize);
     let mut row_length_buffer = [0u8; 2];
-    
-    for _ in 0..frame_height {
+
+    for _ in 0..frame_width {
         // 读取行长度
         reader.read_exact(&mut row_length_buffer)?;
         let row_length = u16::from_le_bytes(row_length_buffer);
+        println!("row_length: {}", row_length);
 
         let mut current_byte_index = 2; // 已经读取了两个字节的行长度
         while current_byte_index < row_length {
@@ -109,4 +116,30 @@ pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_heig
     }
 
     Ok(decompressed_data)
+}
+
+/// Convert shp file to png format
+///
+/// # Arguments
+///
+/// * `file`:
+/// * `palette`:
+///
+/// returns: Result<(), Ra2Error>
+///
+/// # Examples
+///
+/// ```
+/// ```
+pub fn shp2png(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
+    match file.extension() {
+        Some(s) if s.eq("shp") => {
+            let mut shp = ShpReader::new(File::open(&file)?)?;
+            let frame = shp.read_frame()?;
+            let image = frame.render(palette)?;
+            image.save(&file.with_extension("png"))?;
+        }
+        _ => {}
+    }
+    Ok(())
 }

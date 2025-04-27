@@ -17,7 +17,7 @@ fn main() -> Result<(), Ra2Error> {
     while let Ok(frame) = reader.read_frame() {
         // 打印帧数据大小
         println!("Frame Data Size: {} bytes", frame.buffer.len());
-        let image = frame.render(Palette::from_bytes(pal)?)?;
+        let image = frame.render(Palette::decode(pal)?)?;
         image.save(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\glsl.png"#)?;
     }
 
