@@ -1,5 +1,5 @@
-use ra2_pal::{Palette, };
-use ra2_types::{Ra2Error, RgbaImage};
+use ra2_pal::Palette;
+use ra2_types::{Ra2Error, Rgba, RgbaImage};
 
 // 帧头结构体
 #[derive(Clone, Debug, Default)]
@@ -22,8 +22,13 @@ impl ShpFrame {
         for (x, y, pixel) in image.enumerate_pixels_mut() {
             let index = x + y * self.width as u32;
             let color = self.buffer[index as usize];
-            let rgb565 = palette.get_color(color)?;
-            *pixel = rgb565.into()
+            if color == 0 {
+                *pixel = Rgba([0, 0, 0, 0]);
+            }
+            else {
+                let rgb565 = palette.get_color(color)?;
+                *pixel = rgb565.into();
+            }
         }
         Ok(image)
     }

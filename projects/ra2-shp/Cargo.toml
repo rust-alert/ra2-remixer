@@ -1,9 +1,9 @@
 [package]
 name = "ra2-shp"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Aster <192607617@qq.com>"]
 description = "Parser for Red Alert 2 shape files (*.shp)"
-categories = ["rust-patterns"]
+categories = ["game-development"]
 homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-mix"
 repository = "https://github.com/rust-alert/ra2-remixer"
 documentation = "https://docs.rs/ra2-mix"
