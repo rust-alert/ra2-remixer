@@ -1,6 +1,6 @@
 [package]
 name = "ra2-mix"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Aster <192607617@qq.com>"]
 description = "Red Alert 2 MIX file format library for reading and writing MIX archives"
 categories = ["rust-patterns"]
@@ -23,7 +23,7 @@ num = "0.4.3"
 tracing = "0.1.41"
 
 [dependencies.ra2-types]
-version = "0.0.0"
+version = "0.0.1"
 path = "../ra2-types"
 
 [dev-dependencies]
@@ -32,7 +32,6 @@ tempfile = "3.8"
 
 [features]
 default = ["toml"]
-serde_json = ["dep:serde", "dep:serde_json", "ra2-types/serde_json"]
 toml = ["dep:toml", "ra2-types/toml"]
 
 [package.metadata.docs.rs]

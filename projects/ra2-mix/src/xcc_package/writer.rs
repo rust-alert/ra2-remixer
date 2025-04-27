@@ -1,6 +1,7 @@
 //! Writer module for RA2 MIX files
 
 use super::*;
+use std::{collections::VecDeque, fs::create_dir_all, path::PathBuf};
 
 impl MixPackage {
     /// # Arguments
@@ -12,9 +13,29 @@ impl MixPackage {
     /// ```
     /// ```
     pub fn save(self, output: &Path) -> Result<usize, Ra2Error> {
+        if !output.is_file() {
+            return Err(Ra2Error::FileNotFound("must be a file".to_string()));
+        }
         let data = self.encode()?;
         std::fs::write(output, &data)?;
         Ok(data.len())
+    }
+    pub fn dump(self, output: &Path) -> Result<usize, Ra2Error> {
+        if !output.exists() {
+            println!("Skipping file {}", output.display());
+            create_dir_all(output)?;
+        }
+        if !output.is_dir() {
+            return Err(Ra2Error::FileNotFound("file exists but not folder".to_string()));
+        }
+        unsafe { self.dump_unchecked(output) }
+    }
+    pub unsafe fn dump_unchecked(self, output: &Path) -> Result<usize, Ra2Error> {
+        for (filename, data) in self.files.iter() {
+            let mut file = File::create(output.join(&filename))?;
+            file.write_all(&data)?;
+        }
+        Ok(self.files.len())
     }
     /// # Arguments
     ///
@@ -114,4 +135,56 @@ fn create_mix_header(file_map: &HashMap<String, Vec<u8>>) -> Result<Vec<u8>, Ra2
     header.write_u32::<LittleEndian>(data_size)?;
 
     Ok(header)
+}
+
+/// Recursively unpack all mix files in the game directory
+/// 
+/// # Arguments 
+/// 
+/// * `folder`: The game directory path
+/// * `db`: The global mix database
+///
+/// # Examples 
+/// 
+/// ```no_run
+/// # use std::path::Path;
+/// # use ra2_mix::{decompress, MixDatabase, Ra2Error};
+/// fn main() -> Result<(), Ra2Error> {
+///     let db = MixDatabase::load(Path::new("C:\\Program Files (x86)\\XCC\\Utilities\\global mix database.dat"))?;
+///     decompress(Path::new("C:\\Red Alert 2 - Yuri's Revenge"), &db)?;
+///     Ok(())
+/// }
+/// ```
+pub fn decompress(folder: &Path, db: &MixDatabase) -> Result<(), Ra2Error> {
+    if !folder.exists() {
+        return Err(Ra2Error::FileNotFound("file not found".to_string()));
+    }
+    if !folder.is_dir() {
+        return Err(Ra2Error::FileNotFound("file exists but not folder".to_string()));
+    }
+    let mut queue = VecDeque::new();
+    task_append(&mut queue, folder)?;
+    while let Some(path) = queue.pop_front() {
+        let mix = MixPackage::load(&path, db)?;
+        let sub_folder = path.with_extension("");
+        create_dir_all(&sub_folder)?;
+        unsafe { mix.dump_unchecked(&sub_folder)? };
+        task_append(&mut queue, &sub_folder)?;
+    }
+    Ok(())
+}
+
+fn task_append(paths: &mut VecDeque<PathBuf>, folder: &Path) -> Result<(), Ra2Error> {
+    for entry in folder.read_dir()? {
+        let entry = entry?;
+        let path = entry.path();
+        match path.extension() {
+            Some(s) if s.eq("mix") => {
+                println!("Found mix file: {}", path.display());
+                paths.push_back(path);
+            }
+            _ => {}
+        }
+    }
+    Ok(())
 }

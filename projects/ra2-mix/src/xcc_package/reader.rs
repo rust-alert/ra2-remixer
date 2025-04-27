@@ -1,8 +1,8 @@
 //! Reader module for RA2 MIX files
 
-use std::borrow::Cow;
-use crate::MixDatabase;
 use super::*;
+use crate::MixDatabase;
+use std::borrow::Cow;
 
 impl MixPackage {
     /// # Arguments
@@ -139,7 +139,12 @@ fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>
 }
 
 /// Creates a file map from file entries and mix data
-fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader, db: &MixDatabase) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
+fn get_file_map(
+    file_entries: &[FileEntry],
+    mix_data: &[u8],
+    header: &MixHeader,
+    db: &MixDatabase,
+) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
     if file_entries.len() <= 1 {
         return Ok(HashMap::new());
     }
@@ -167,19 +172,15 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader,
 
     let mix_body_data = &mix_data[body_start..];
 
-
     // Get filename to ID mapping
-    let id_filename_map = if let Some(db_entry) = local_mix_db_file_entry {
-        if db_entry.offset < 0 { 
-            return Err(Ra2Error::InvalidFormat { message: "This `mix` file is protected".to_string() });
-        }
+    let id_filename_map = match local_mix_db_file_entry {
         // Use local mix database
-        let local_mix_db_data = get_file_data_from_mix_body(&db_entry, mix_body_data);
-        Cow::Owned(MixDatabase::decode_dat(&local_mix_db_data)?)
-    }
-    else {
-        println!("No local mix database found, please add global mix database");
-        Cow::Borrowed(db)
+        Some(db_entry) if db_entry.offset > 0 => {
+            let local_mix_db_data = get_file_data_from_mix_body(&db_entry, mix_body_data);
+            Cow::Owned(MixDatabase::decode(&local_mix_db_data)?)
+        }
+        // Use global mix database
+        _ => Cow::Borrowed(db),
     };
 
     // Create file map

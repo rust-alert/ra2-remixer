@@ -19,5 +19,5 @@ pub use ra2_types::{CncGame, Ra2Error, Result};
 
 pub use crate::{
     names_db::MixDatabase,
-    xcc_package::{MixPackage, extract, patch},
+    xcc_package::{MixPackage, extract, patch, writer::decompress},
 };

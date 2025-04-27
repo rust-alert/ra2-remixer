@@ -5,11 +5,8 @@ use std::path::Path;
 
 fn main() -> Result<(), Ra2Error> {
     let dat = include_bytes!(r#"C:\Program Files (x86)\XCC\Utilities\global mix database.dat"#);
-    let db = MixDatabase::decode_dat(dat)?;
-    
-    let _ = db.save_toml(Path::new(r#"C:\Program Files (x86)\XCC\Utilities\global mix database.toml"#))?;
-    
-    
+    let db = MixDatabase::decode(dat)?;
+    let _ = db.save(Path::new(r#"C:\Program Files (x86)\XCC\Utilities\global mix database.toml"#))?;
 
     // Load an encrypted MIX file
     let mix = MixPackage::load(Path::new("E:\\Games\\Red Alert 2 - Yuris Revenge\\ra2.mix"), &db)?;
@@ -21,6 +18,6 @@ fn main() -> Result<(), Ra2Error> {
     else {
         println!("Successfully decrypted MIX file with {} files", mix.files.len());
     }
-
+    mix.dump(Path::new("E:\\Games\\Red Alert 2 - Yuris Revenge\\ra2"))?;
     Ok(())
 }

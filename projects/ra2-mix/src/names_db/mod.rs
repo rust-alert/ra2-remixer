@@ -1,6 +1,6 @@
 use crate::{checksum::ra2_crc, constants::XCC_HEADER_SIZE};
 use ra2_types::Ra2Error;
-use std::{collections::BTreeMap, io::Write, path::Path};
+use std::{collections::BTreeMap, ffi::OsStr, io::Write, path::Path};
 
 mod reader;
 mod writer;
@@ -12,34 +12,40 @@ pub struct MixDatabase {
 }
 
 impl MixDatabase {
-    pub fn decode_dat(dat: &[u8]) -> Result<MixDatabase, Ra2Error> {
+    pub fn decode(dat: &[u8]) -> Result<MixDatabase, Ra2Error> {
         let mut out = MixDatabase::default();
         let names = get_filenames_from_mix_db(dat);
         names.into_iter().for_each(|name| out.add(name));
         Ok(out)
     }
-    #[cfg(feature = "serde_json")]
-    pub fn decode_json(json: &str) -> Result<MixDatabase, Ra2Error> {
-        Ok(Self { map: serde_json::from_str(json)? })
-    }
-
     pub fn load(path: &Path) -> Result<MixDatabase, Ra2Error> {
-        #[cfg(feature = "serde_json")]
-        if path.extension().eq(Some("json")) {
-            return Self::decode_json(&std::fs::read_to_string(path)?);
+        match path.extension() {
+            #[cfg(feature = "toml")]
+            Some(s) if s.eq("toml") => {
+                let text = std::fs::read_to_string(path)?;
+                Ok(Self { map: toml::from_str(&text)? })
+            }
+            _ => Ok(Self::decode(&std::fs::read(path)?)?),
         }
-        Ok(Self::decode_dat(&std::fs::read(path)?)?)
     }
+}
 
+impl MixDatabase {
     #[cfg(feature = "serde_json")]
     pub fn encode_json(self) -> Result<String, Ra2Error> {
         Ok(serde_json::to_string(&self.map)?)
     }
 
-    pub fn save_toml(&self, path: &Path) -> Result<(), Ra2Error> {
-        let mut file = std::fs::File::create(path)?;
-        for (crc_id, filename) in &self.map {
-            writeln!(file, "{} = {:?}", crc_id, filename)?;
+    pub fn save(&self, path: &Path) -> Result<(), Ra2Error> {
+        match path.extension() {
+            #[cfg(feature = "toml")]
+            Some(s) if s.eq("toml") => {
+                let mut file = std::fs::File::create(path)?;
+                for (crc_id, filename) in &self.map {
+                    writeln!(file, "{} = {:?}", crc_id, filename)?;
+                }
+            }
+            _ => {}
         }
         Ok(())
     }

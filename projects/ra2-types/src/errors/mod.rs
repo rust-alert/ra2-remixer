@@ -2,7 +2,7 @@
 
 #[cfg(feature = "image")]
 mod from_image;
-
+#[cfg(feature = "toml")]
 mod from_toml;
 
 use crate::Ra2Error;

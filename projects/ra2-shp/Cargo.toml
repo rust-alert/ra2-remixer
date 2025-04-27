@@ -21,7 +21,7 @@ version = "0.0.0"
 path = "../ra2-pal"
 
 [dependencies.ra2-types]
-version = "0.0.0"
+version = "0.0.1"
 path = "../ra2-types"
 features = ["image"]
 
