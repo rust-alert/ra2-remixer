@@ -1,5 +1,5 @@
 use crate::Ra2Error;
-use image::{Frames, ImageError};
+use image::{ ImageError};
 
 impl From<ImageError> for Ra2Error {
     fn from(error: ImageError) -> Self {

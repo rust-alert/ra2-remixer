@@ -7,8 +7,7 @@ use std::path::Path;
 
 fn main() -> Result<(), Ra2Error> {
     let root = Path::new("E:\\Games\\Red Alert 2 - Yuri's Revenge");
-    let file = std::fs::read(root.join("ra2/cache/unittem.pal"))?;
-    let pal = Palette::decode(&file)?;
+    let pal = Palette::load(&root.join("ra2/cache/unittem.pal"))?;
     let shp_path = root.join("ra2/conquer/engineer.shp");
     shp2apng(&shp_path, &pal)?;
     Ok(())

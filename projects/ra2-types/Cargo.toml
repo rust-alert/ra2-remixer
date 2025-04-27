@@ -1,10 +1,10 @@
 [package]
 name = "ra2-types"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Aster <192607617@qq.com>"]
 description = "Shared types definitions for Red Alert 2"
 categories = ["game-development"]
-homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-mix"
+homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-types"
 repository = "https://github.com/rust-alert/ra2-remixer"
 documentation = "https://docs.rs/ra2-mix"
 readme = "readme.md"
@@ -15,7 +15,9 @@ exclude = ["package.json", "tests/**"]
 [dependencies]
 toml = { version = "0.5.10", optional = true }
 serde_json = { version = "1.0.140", optional = true }
-image = { version = "0.24.0", optional = true, default-features = false}
+image = { version = "0.24.0", optional = true, default-features = false }
+apng = { version = "0.3.4", optional = true, default-features = false }
+walkdir = { version = "1.0.7", optional = true }
 
 [dev-dependencies]
 

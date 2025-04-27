@@ -14,7 +14,13 @@ mod games;
 
 pub use crate::games::CncGame;
 #[cfg(feature = "image")]
-pub use image::{Rgba, RgbaImage, DynamicImage};
+pub use image::{DynamicImage, Rgba, RgbaImage};
+#[cfg(feature = "apng")]
+pub use apng;
+#[cfg(feature = "walkdir")]
+pub use walkdir::WalkDir;
+
+
 use std::{
     error::Error,
     fmt::{Display, Formatter},
@@ -34,7 +40,6 @@ pub enum Ra2Error {
         /// The error message
         message: String,
     },
-
     /// Invalid file format
     InvalidFormat {
         /// The error message
@@ -56,6 +61,13 @@ pub enum Ra2Error {
     },
     /// Missing file
     FileNotFound(String),
+    /// Out of boundary
+    OutOfBoundary {
+        /// Max limit
+        limit: usize,
+        /// The error message
+        message: String,
+    },
 }
 
 impl Error for Ra2Error {}
@@ -80,6 +92,9 @@ impl Display for Ra2Error {
             }
             Ra2Error::EncodeError { format, message } => {
                 write!(f, "Encode error: {}: {}", format, message)
+            }
+            Ra2Error::OutOfBoundary { limit, message } => {
+                write!(f, "Out of boundary {}: {}", limit, message)
             }
         }
     }

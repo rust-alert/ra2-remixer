@@ -14,14 +14,18 @@ mod reader;
 
 pub use crate::{
     frames::ShpFrame,
-    reader::{ShpReader, shp2apng, shp2png},
+    reader::{ShpReader, shp_with_pal, shp2apng, shp2png},
 };
 
-// 文件头结构体
+/// 文件头结构体
 #[derive(Copy, Clone, Debug)]
 pub struct ShpHeader {
-    pub reserved: u16,         // 保留字 (必须为 0)
-    pub width: u16,            // 宽度
-    pub height: u16,           // 高度
-    pub number_of_frames: u16, // 帧数
+    /// Unused reserved header
+    pub reserved: u16,
+    /// The animation width
+    pub width: u16,
+    /// The animation height
+    pub height: u16,
+    /// The animation frames
+    pub number_of_frames: u16,
 }

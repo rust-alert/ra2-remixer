@@ -1,15 +1,15 @@
 use crate::{ShpFrame, ShpHeader};
-use apng::{Encoder, Frame, PNGImage, load_dynamic_image};
+
 use byteorder::{LittleEndian, ReadBytesExt};
 use ra2_pal::Palette;
-use ra2_types::{DynamicImage, Ra2Error};
+use ra2_types::{DynamicImage, Ra2Error, WalkDir, apng};
 use std::{
-    ffi::OsStr,
     fs::File,
     io::{BufReader, BufWriter, Read, Seek, SeekFrom},
     path::Path,
 };
 
+/// The lazy SHP reader
 #[derive(Debug)]
 pub struct ShpReader {
     header: ShpHeader,
@@ -226,12 +226,12 @@ pub fn shp2png(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
 pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     let shp_path = Path::new(file);
     let mut shp = ShpReader::new(shp_path)?;
-    let mut png_images: Vec<PNGImage> = Vec::new();
+    let mut png_images: Vec<apng::PNGImage> = Vec::new();
     for index in 0..shp.animation_frames() {
         match shp.get_frame(index as u64) {
             Ok(frame) => {
                 let dy = DynamicImage::ImageRgba8(frame.render(&palette, shp.animation_width(), shp.animation_height())?);
-                let png = load_dynamic_image(dy).unwrap();
+                let png = apng::load_dynamic_image(dy).unwrap();
                 png_images.push(png)
             }
             Err(e) => {
@@ -241,12 +241,37 @@ pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     }
     let path = shp_path.with_extension("apng");
     let mut out = BufWriter::new(File::create(path)?);
-    let config = apng::create_config(&png_images, None)
-        .map_err(|e| Ra2Error::DecodeError { format: "apng".to_string(), message: e.to_string() })?;
-    let mut encoder = Encoder::new(&mut out, config).unwrap();
-    let frame = Frame { delay_num: Some(1), delay_den: Some(24), ..Default::default() };
-    encoder
-        .encode_all(png_images, Some(&frame))
-        .map_err(|e| Ra2Error::DecodeError { format: "apng".to_string(), message: e.to_string() })?;
+    let config = apng::create_config(&png_images, None)?;
+    let mut encoder = apng::Encoder::new(&mut out, config).unwrap();
+    let frame = apng::Frame { delay_num: Some(1), delay_den: Some(24), ..Default::default() };
+    encoder.encode_all(png_images, Some(&frame))?;
+    Ok(())
+}
+
+/// Convert shp with same name pal to png
+/// 
+/// # Arguments 
+/// 
+/// * `root`: 
+/// 
+/// returns: Result<(), Ra2Error> 
+/// 
+/// # Examples 
+/// 
+/// ```
+/// 
+/// ```
+pub fn shp_with_pal(root: &Path) -> ra2_types::Result<()> {
+    for entry in WalkDir::new(root) {
+        let entry = entry.unwrap();
+        let name = entry.file_name().to_string_lossy();
+        if name.ends_with("shp") {
+            let pal = entry.path().with_extension("pal");
+            if pal.exists() {
+                let pal = Palette::load(&pal)?;
+                shp2png(&entry.path(), &pal)?;
+            }
+        }
+    }
     Ok(())
 }

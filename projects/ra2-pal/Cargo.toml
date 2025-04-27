@@ -17,7 +17,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 image = { version = "0.24.9", default-features = false }
 
 [dependencies.ra2-types]
-version = "0.0.2"
+version = "0.0.3"
 path = "../ra2-types"
 
 [dev-dependencies]

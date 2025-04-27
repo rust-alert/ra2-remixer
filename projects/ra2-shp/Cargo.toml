@@ -13,7 +13,6 @@ edition = "2024"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
-apng = { version = "0.3.4" }
 serde = { version = "1.0", features = ["derive"] }
 byteorder = { version = "1" }
 tracing = { version = "0" }
@@ -23,9 +22,9 @@ version = "0.0.2"
 path = "../ra2-pal"
 
 [dependencies.ra2-types]
-version = "0.0.2"
+version = "0.0.3"
 path = "../ra2-types"
-features = ["image"]
+features = ["image", "apng", "walkdir"]
 
 [dev-dependencies]
 tempfile = "3.8"

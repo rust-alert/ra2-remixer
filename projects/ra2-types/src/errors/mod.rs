@@ -2,6 +2,8 @@
 
 #[cfg(feature = "image")]
 mod from_image;
+#[cfg(feature = "apng")]
+mod for_apng;
 #[cfg(feature = "toml")]
 mod from_toml;
 

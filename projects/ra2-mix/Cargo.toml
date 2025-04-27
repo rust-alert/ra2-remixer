@@ -23,7 +23,7 @@ num = "0.4.3"
 tracing = "0.1.41"
 
 [dependencies.ra2-types]
-version = "0.0.2"
+version = "0.0.3"
 path = "../ra2-types"
 
 [dev-dependencies]

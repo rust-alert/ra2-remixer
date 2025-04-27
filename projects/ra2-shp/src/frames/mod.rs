@@ -1,22 +1,47 @@
 use ra2_pal::Palette;
 use ra2_types::{Ra2Error, Rgba, RgbaImage};
 
-// 帧头结构体
+/// 帧头结构体
 #[derive(Clone, Debug, Default)]
 pub struct ShpFrame {
-    pub x: u16,             // 水平位置 (0,0)
-    pub y: u16,             // 垂直位置 (0,0)
-    pub width: u16,         // 帧宽度
-    pub height: u16,        // 帧高度
-    pub flags: u8,          // 特殊标志
-    pub reserved1: [u8; 3], // 对齐 (3 字节)
-    pub color: u32,         // 颜色 (可以是透明色)
-    pub reserved2: [u8; 4], // 保留字2 (未使用)
-    pub offset: u32,        // 帧数据在文件中的偏移量
+    /// The starting coordinate of the x-axis
+    pub x: u16,
+    /// The starting coordinate of the y-axis
+    pub y: u16,
+    /// The width of this frame
+    pub width: u16,
+    /// The height of this frame
+    pub height: u16,
+    /// 
+    pub flags: u8, 
+    /// unused
+    pub reserved1: [u8; 3],
+    /// unused
+    pub color: u32,
+    /// unused
+    pub reserved2: [u8; 4], 
+    /// Offset start
+    pub offset: u32,
+    /// The index buffer
     pub buffer: Vec<u8>,
 }
 
 impl ShpFrame {
+    /// Render frame as rgba image buffer
+    /// 
+    /// # Arguments 
+    /// 
+    /// * `palette`: 
+    /// * `width`: 
+    /// * `depth`: 
+    /// 
+    /// returns: Result<ImageBuffer<Rgba<u8>, Vec<u8, Global>>, Ra2Error> 
+    /// 
+    /// # Examples 
+    /// 
+    /// ```
+    /// 
+    /// ```
     pub fn render(&self, palette: &Palette, width: u32, depth: u32) -> Result<RgbaImage, Ra2Error> {
         let mut image = RgbaImage::new(width, depth);
         let mut index = 0;
