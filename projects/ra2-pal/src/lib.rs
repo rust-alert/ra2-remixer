@@ -14,8 +14,8 @@ mod reader;
 
 pub use crate::colors::Ra2Color;
 use ra2_types::Ra2Error;
-use serde::{Deserialize, Serialize};
-use std::io::Read;
+use serde::{ Serialize};
+
 
 /// `PAL` files contain color palettes for various objects in the game.
 #[repr(C)]

@@ -1,9 +1,4 @@
-use crate::{
-    Ra2Error, XccGame,
-    checksum::ra2_crc,
-    constants::*,
-    crypto::{decrypt_blowfish_key, decrypt_mix_header, get_decryption_block_sizing},
-};
+use crate::{Ra2Error, CncGame, checksum::ra2_crc, constants::*, crypto::{decrypt_blowfish_key, decrypt_mix_header, get_decryption_block_sizing}, MixDatabase};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::{
     collections::HashMap,
@@ -19,10 +14,12 @@ pub mod writer;
 #[derive(Default, Debug)]
 pub struct MixPackage {
     /// The game version of the MIX package
-    pub game: XccGame,
+    pub game: CncGame,
     /// A map of file names to file data
     pub files: HashMap<String, Vec<u8>>,
 }
+
+
 
 /// MIX file header
 #[derive(Copy, Debug, Clone)]
@@ -114,7 +111,7 @@ impl MixPackage {
 /// ```
 /// ```
 pub fn extract(input: &Path, output: &Path) -> Result<(), Ra2Error> {
-    let xcc = MixPackage::load(input)?;
+    let xcc = MixPackage::load(input, &MixDatabase::default())?;
     let file_map = xcc.files;
     std::fs::create_dir_all(output)?;
     for (filename, file_data) in file_map {
@@ -138,7 +135,7 @@ pub fn extract(input: &Path, output: &Path) -> Result<(), Ra2Error> {
 /// ```
 /// ```
 pub fn patch(input: &Path, output: &Path) -> Result<(), Ra2Error> {
-    let mut xcc = MixPackage::load(input)?;
+    let mut xcc = MixPackage::load(input, &MixDatabase::default())?;
     for entry in std::fs::read_dir(input)? {
         let entry = entry?;
         xcc.add_file(&entry.path())?;

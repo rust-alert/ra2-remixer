@@ -1,4 +1,4 @@
-use image::{Rgba, RgbaImage};
+use image::{Rgba,};
 use serde::{Deserialize, Serialize};
 
 /// The palette color used in game
@@ -21,6 +21,16 @@ impl From<Ra2Color> for Rgba<u8> {
             ((value.blue as u32 * 255) / 63) as u8,
             255,
         ])
+    }
+}
+
+impl From<Rgba<u8>> for Ra2Color {
+    fn from(value: Rgba<u8>) -> Self {
+        Self {
+            red: convert_8bit_to_5or6bit(value[0], false),
+            green: convert_8bit_to_5or6bit(value[1], true),
+            blue: convert_8bit_to_5or6bit(value[2], false),
+        }
     }
 }
 

@@ -12,11 +12,12 @@
 mod checksum;
 mod constants;
 mod crypto;
+mod names_db;
 mod xcc_package;
 
-pub use ra2_types::{Ra2Error, Result};
+pub use ra2_types::{CncGame, Ra2Error, Result};
 
 pub use crate::{
-    constants::XccGame,
+    names_db::MixDatabase,
     xcc_package::{MixPackage, extract, patch},
 };

@@ -1,5 +1,7 @@
 //! Reader module for RA2 MIX files
 
+use std::borrow::Cow;
+use crate::MixDatabase;
 use super::*;
 
 impl MixPackage {
@@ -13,9 +15,9 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn load(mix_path: &Path) -> Result<Self, Ra2Error> {
+    pub fn load(mix_path: &Path, db: &MixDatabase) -> Result<Self, Ra2Error> {
         let data = std::fs::read(mix_path)?;
-        MixPackage::decode(&data)
+        MixPackage::decode(&data, db)
     }
     /// Reads a MIX file and returns a map of filenames to file data
     ///
@@ -29,9 +31,9 @@ impl MixPackage {
     ///
     /// ```
     /// ```
-    pub fn decode(mix_data: &[u8]) -> Result<Self, Ra2Error> {
+    pub fn decode(mix_data: &[u8], db: &MixDatabase) -> Result<Self, Ra2Error> {
         let (header, file_entries, mix_data_vec) = read_file_info(mix_data)?;
-        let map = get_file_map(&file_entries, &mix_data_vec, &header)?;
+        let map = get_file_map(&file_entries, &mix_data_vec, &header, db)?;
         Ok(Self { game: Default::default(), files: map })
     }
 }
@@ -54,30 +56,6 @@ fn get_file_entries(file_count: usize, index_data: &[u8]) -> Result<Vec<FileEntr
     }
 
     Ok(file_entries)
-}
-
-/// Extracts filenames from a MIX database file
-fn get_filenames_from_mix_db(mix_db_file_data: &[u8]) -> Vec<String> {
-    let mut filenames = Vec::new();
-    let mut start = XCC_HEADER_SIZE;
-
-    while start < mix_db_file_data.len() {
-        let mut end = start;
-        while end < mix_db_file_data.len() && mix_db_file_data[end] != 0 {
-            end += 1;
-        }
-
-        if start < end {
-            if let Ok(filename) = std::str::from_utf8(&mix_db_file_data[start..end]) {
-                filenames.push(filename.to_string());
-            }
-        }
-
-        end += 1; // Skip the null terminator
-        start = end;
-    }
-
-    filenames
 }
 
 /// Extracts file data from MIX body
@@ -161,7 +139,7 @@ fn read_file_info(mix_data: &[u8]) -> Result<(MixHeader, Vec<FileEntry>, Vec<u8>
 }
 
 /// Creates a file map from file entries and mix data
-fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
+fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader, db: &MixDatabase) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
     if file_entries.len() <= 1 {
         return Ok(HashMap::new());
     }
@@ -191,34 +169,18 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
 
 
     // Get filename to ID mapping
-    let id_filename_map: HashMap<i32, String>;
-
-    if let Some(db_entry) = local_mix_db_file_entry {
+    let id_filename_map = if let Some(db_entry) = local_mix_db_file_entry {
         if db_entry.offset < 0 { 
             return Err(Ra2Error::InvalidFormat { message: "This `mix` file is protected".to_string() });
         }
         // Use local mix database
         let local_mix_db_data = get_file_data_from_mix_body(&db_entry, mix_body_data);
-        let filenames = get_filenames_from_mix_db(&local_mix_db_data);
-
-        id_filename_map = filenames.iter().map(|filename| (ra2_crc(filename), filename.clone())).collect();
+        Cow::Owned(MixDatabase::decode_dat(&local_mix_db_data)?)
     }
     else {
         println!("No local mix database found, please add global mix database");
-        // Use global mix database
-        #[cfg(feature = "serde_json")]
-        {
-            let global_db = load_global_mix_database()?;
-            id_filename_map = global_db.iter().map(|(filename, id)| (*id, filename.clone())).collect();
-        }
-
-        #[cfg(not(feature = "serde_json"))]
-        {
-            // Without serde support, we can't load the global database
-            // Return an empty map
-            id_filename_map = HashMap::new();
-        }
-    }
+        Cow::Borrowed(db)
+    };
 
     // Create file map
     let mut filemap = HashMap::new();
@@ -226,7 +188,7 @@ fn get_file_map(file_entries: &[FileEntry], mix_data: &[u8], header: &MixHeader)
     for entry in file_entries {
         let file_data = get_file_data_from_mix_body(entry, mix_body_data);
 
-        if let Some(filename) = id_filename_map.get(&entry.id) {
+        if let Some(filename) = id_filename_map.get(entry.id) {
             filemap.insert(filename.clone(), file_data);
         }
     }

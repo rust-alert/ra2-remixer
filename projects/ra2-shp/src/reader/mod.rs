@@ -82,9 +82,9 @@ impl ShpFrame {
 
 // 解压缩 RLE 数据
 pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, Ra2Error> {
-    let mut decompressed_data = Vec::new();
+    let mut decompressed_data = Vec::with_capacity(frame_width as usize * frame_height as usize);
     let mut row_length_buffer = [0u8; 2];
-
+    
     for _ in 0..frame_height {
         // 读取行长度
         reader.read_exact(&mut row_length_buffer)?;

@@ -63,7 +63,7 @@ impl MixPackage {
 }
 
 /// Creates MIX database data
-fn get_mix_db_data(filenames: &[String], game: XccGame) -> Vec<u8> {
+fn get_mix_db_data(filenames: &[String], game: CncGame) -> Vec<u8> {
     let num_files = filenames.len();
     let db_size_in_bytes = XCC_HEADER_SIZE + filenames.iter().map(|filename| filename.len() + 1).sum::<usize>();
 
@@ -91,7 +91,7 @@ fn get_mix_db_data(filenames: &[String], game: XccGame) -> Vec<u8> {
 }
 
 /// Processes input files and creates a file map
-pub fn coalesce_input_files(game: XccGame, file_map: &HashMap<String, Vec<u8>>) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
+pub fn coalesce_input_files(game: CncGame, file_map: &HashMap<String, Vec<u8>>) -> Result<HashMap<String, Vec<u8>>, Ra2Error> {
     let mut extra_file_map = file_map.clone();
     // Get filenames and create mix database
     let mut filenames: Vec<String> = extra_file_map.keys().cloned().collect();

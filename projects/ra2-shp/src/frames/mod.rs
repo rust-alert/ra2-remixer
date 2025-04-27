@@ -1,5 +1,5 @@
-use ra2_pal::{Palette, Ra2Color};
-use ra2_types::{Ra2Error, Rgba, RgbaImage};
+use ra2_pal::{Palette, };
+use ra2_types::{Ra2Error, RgbaImage};
 
 // 帧头结构体
 #[derive(Clone, Debug, Default)]

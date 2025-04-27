@@ -31,7 +31,7 @@ tempfile = "3.8"
 
 [features]
 default = []
-serde_json = ["dep:serde", "dep:serde_json"]
+serde_json = ["dep:serde", "dep:serde_json", "ra2-types/serde_json"]
 
 [package.metadata.docs.rs]
 all-features = true

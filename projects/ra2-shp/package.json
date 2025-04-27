@@ -1,6 +1,6 @@
 {
     "private": true,
     "scripts": {
-        "p": "cargo publish --allow-dirty"
+        "p": "cargo publish --allow-dirty --registry crates-io"
     }
 }

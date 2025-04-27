@@ -10,7 +10,9 @@
 //! It supports both encrypted and unencrypted MIX files, and can extract files from MIX archives.
 
 mod errors;
+mod games;
 
+pub use crate::games::CncGame;
 #[cfg(feature = "image")]
 pub use image::{Rgba, RgbaImage};
 use std::{
