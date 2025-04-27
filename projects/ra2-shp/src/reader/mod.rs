@@ -1,11 +1,12 @@
 use crate::{ShpFrame, ShpHeader};
+use apng::{Encoder, Frame, PNGImage, load_dynamic_image};
 use byteorder::{LittleEndian, ReadBytesExt};
 use ra2_pal::Palette;
-use ra2_types::Ra2Error;
+use ra2_types::{DynamicImage, Ra2Error};
 use std::{
     ffi::OsStr,
     fs::File,
-    io::{BufReader, Read, Seek, SeekFrom},
+    io::{BufReader, BufWriter, Read, Seek, SeekFrom},
     path::Path,
 };
 
@@ -19,16 +20,23 @@ impl<R: Read> ShpReader<R> {
     pub fn new(buffer: R) -> Result<Self, Ra2Error> {
         let mut reader = BufReader::new(buffer);
         let file_header = read_file_header(&mut reader)?;
-        println!("File Header: {:?}", file_header);
         Ok(Self { header: file_header, reader })
     }
-    pub fn header(&self) -> &ShpHeader {
-        &self.header
+    pub fn animation_frames(&self) -> u32 {
+        self.header.number_of_frames as u32
     }
-    pub fn read_frame(&mut self) -> Result<ShpFrame, Ra2Error>
+    pub fn animation_width(&self) -> u32 {
+        self.header.width as u32
+    }
+    pub fn animation_height(&self) -> u32 {
+        self.header.height as u32
+    }
+
+    pub fn get_frame(&mut self, index: u64) -> Result<ShpFrame, Ra2Error>
     where
         R: Seek,
     {
+        self.reader.seek(SeekFrom::Start(8 + index * 24))?;
         let mut buffer = ShpFrame::default();
         buffer.read_frame_header(&mut self.reader)?;
         buffer.read_frame_data(&mut self.reader)?;
@@ -42,7 +50,6 @@ pub fn read_file_header<R: Read>(reader: &mut R) -> Result<ShpHeader, Ra2Error> 
     let width = reader.read_u16::<LittleEndian>()?;
     let height = reader.read_u16::<LittleEndian>()?;
     let number_of_frames = reader.read_u16::<LittleEndian>()?;
-
     Ok(ShpHeader { reserved, width, height, number_of_frames })
 }
 
@@ -65,23 +72,20 @@ impl ShpFrame {
         if self.offset == 0 {
             return Ok(());
         }
-
         // 跳转到帧数据的偏移位置
         reader.seek(SeekFrom::Start(self.offset as u64))?;
-        println!("width: {:?}", self);
         // 检查是否使用压缩
         if self.flags & 0x02 == 0 {
-            println!("FAST");
             // 未压缩
             let frame_size = self.width as u32 * self.height as u32;
             self.buffer = vec![0u8; frame_size as usize];
             reader.read_exact(&mut self.buffer)?;
         }
         else {
-            println!("RLE");
             // 使用 RLE 压缩
             self.buffer = decompress_rle_data(reader, self.width, self.height)?;
         }
+        debug_assert_eq!(self.buffer.len(), self.width as usize * self.height as usize);
         Ok(())
     }
 }
@@ -89,32 +93,32 @@ impl ShpFrame {
 // 解压缩 RLE 数据
 pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_height: u16) -> Result<Vec<u8>, Ra2Error> {
     let mut decompressed_data = Vec::with_capacity(frame_width as usize * frame_height as usize);
-    let mut row_length_buffer = [0u8; 2];
-
-    for _ in 0..frame_width {
-        // 读取行长度
-        reader.read_exact(&mut row_length_buffer)?;
-        let row_length = u16::from_le_bytes(row_length_buffer);
-        println!("row_length: {}", row_length);
-
-        let mut current_byte_index = 2; // 已经读取了两个字节的行长度
+    for _ in 0..frame_height {
+        let mut line_buffer = Vec::with_capacity(frame_width as usize);
+        // 获取该行长度
+        let row_length = reader.read_u16::<LittleEndian>()?;
+        // 已经读取了两个字节的行长度
+        let mut current_byte_index = 2;
         while current_byte_index < row_length {
             let control_byte = reader.read_u8()?;
             current_byte_index += 1;
-
+            // 0x00 代表透明
             if control_byte == 0x00 {
-                // 透明像素
+                // 透明像素个数
                 let transparent_count = reader.read_u8()?;
                 current_byte_index += 1;
-                decompressed_data.extend(vec![0x00; transparent_count as usize]); // 0x00 代表透明
+                line_buffer.extend(vec![0x00; transparent_count as usize]);
             }
             else {
-                // 普通像素
-                decompressed_data.push(control_byte);
+                line_buffer.push(control_byte);
             }
         }
+        // 不明原因导致 line_buffer 有可能比 frame_width 长, 此时截掉多余部分即可
+        for index in 0..frame_width {
+            let byte = line_buffer.get(index as usize).unwrap_or(&0);
+            decompressed_data.push(*byte);
+        }
     }
-
     Ok(decompressed_data)
 }
 
@@ -135,11 +139,51 @@ pub fn shp2png(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     match file.extension() {
         Some(s) if s.eq("shp") => {
             let mut shp = ShpReader::new(File::open(&file)?)?;
-            let frame = shp.read_frame()?;
-            let image = frame.render(palette)?;
+            let frame = shp.get_frame(0)?;
+            let image = frame.render(palette, shp.animation_width(), shp.animation_height())?;
             image.save(&file.with_extension("png"))?;
         }
         _ => {}
     }
+    Ok(())
+}
+/// Convert shp file to apng format
+///
+/// # Arguments
+///
+/// * `file`:
+/// * `palette`:
+///
+/// returns: Result<(), Ra2Error>
+///
+/// # Examples
+///
+/// ```
+/// ```
+pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
+    let shp_path = Path::new(file);
+    let mut shp = ShpReader::new(File::open(shp_path)?)?;
+    let mut png_images: Vec<PNGImage> = Vec::new();
+    for index in 0..shp.animation_frames() {
+        match shp.get_frame(index as u64) {
+            Ok(frame) => {
+                let dy = DynamicImage::ImageRgba8(frame.render(&palette, shp.animation_width(), shp.animation_height())?);
+                let png = load_dynamic_image(dy).unwrap();
+                png_images.push(png)
+            }
+            Err(e) => {
+                tracing::error!("{}", e);
+            }
+        }
+    }
+    let path = shp_path.with_extension("apng");
+    let mut out = BufWriter::new(File::create(path)?);
+    let config = apng::create_config(&png_images, None)
+        .map_err(|e| Ra2Error::DecodeError { format: "apng".to_string(), message: e.to_string() })?;
+    let mut encoder = Encoder::new(&mut out, config).unwrap();
+    let frame = Frame { delay_num: Some(1), delay_den: Some(24), ..Default::default() };
+    encoder
+        .encode_all(png_images, Some(&frame))
+        .map_err(|e| Ra2Error::DecodeError { format: "apng".to_string(), message: e.to_string() })?;
     Ok(())
 }

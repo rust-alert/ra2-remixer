@@ -15,7 +15,8 @@ exclude = ["package.json", "tests/**"]
 [dependencies]
 apng = { version = "0.3.4" }
 serde = { version = "1.0", features = ["derive"] }
-byteorder = {version = "1"}
+byteorder = { version = "1" }
+tracing = { version = "0" }
 
 [dependencies.ra2-pal]
 version = "0.0.1"

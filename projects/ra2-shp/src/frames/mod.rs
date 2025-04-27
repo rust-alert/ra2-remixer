@@ -17,17 +17,20 @@ pub struct ShpFrame {
 }
 
 impl ShpFrame {
-    pub fn render(&self, palette: &Palette) -> Result<RgbaImage, Ra2Error> {
-        let mut image = RgbaImage::new(self.width as u32, self.height as u32);
-        for (x, y, pixel) in image.enumerate_pixels_mut() {
-            let index = x + y * self.width as u32;
-            let color = self.buffer[index as usize];
-            if color == 0 {
-                *pixel = Rgba([0, 0, 0, 0]);
-            }
-            else {
-                let rgb565 = palette.get_color(color)?;
-                *pixel = rgb565.into();
+    pub fn render(&self, palette: &Palette, width: u32, depth: u32) -> Result<RgbaImage, Ra2Error> {
+        let mut image = RgbaImage::new(width, depth);
+        let mut index = 0;
+        for dy in 0..self.height {
+            for dx in 0..self.width {
+                let pixel = image.get_pixel_mut((self.x + dx) as u32, (self.y + dy) as u32);
+                let color = self.buffer[index];
+                if color == 0 {
+                    *pixel = Rgba([0, 0, 0, 0]);
+                }
+                else {
+                    *pixel = palette.get_color(color)?.into();
+                }
+                index += 1;
             }
         }
         Ok(image)
