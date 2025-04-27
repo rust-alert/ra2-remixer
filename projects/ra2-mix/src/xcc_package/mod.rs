@@ -36,7 +36,7 @@ struct MixHeader {
 #[derive(Debug, Clone, Copy)]
 struct FileEntry {
     /// File ID (CRC of filename)
-    pub id: i32,
+    pub id: u32,
     /// Offset in the body data
     pub offset: i32,
     /// Size of the file
@@ -46,7 +46,7 @@ struct FileEntry {
 #[derive(Debug, Clone)]
 struct FileInfo {
     /// File ID (CRC of filename)
-    file_id: i32,
+    file_id: u32,
     /// File data
     data: Vec<u8>,
 }

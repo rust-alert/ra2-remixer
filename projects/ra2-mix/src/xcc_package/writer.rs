@@ -43,7 +43,7 @@ impl MixPackage {
             let size = file_info.data.len() as u32;
 
             // Write file entry
-            file_entry_data.write_i32::<LittleEndian>(file_info.file_id)?;
+            file_entry_data.write_u32::<LittleEndian>(file_info.file_id)?;
             file_entry_data.write_u32::<LittleEndian>(offset)?;
             file_entry_data.write_u32::<LittleEndian>(size)?;
 

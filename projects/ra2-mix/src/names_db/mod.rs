@@ -1,6 +1,6 @@
 use crate::{checksum::ra2_crc, constants::XCC_HEADER_SIZE};
 use ra2_types::Ra2Error;
-use std::{collections::BTreeMap, path::Path};
+use std::{collections::BTreeMap, io::Write, path::Path};
 
 mod reader;
 mod writer;
@@ -8,16 +8,14 @@ mod writer;
 /// The reverse of the MIX database
 #[derive(Clone, Debug, Default)]
 pub struct MixDatabase {
-    map: BTreeMap<i32, String>,
+    map: BTreeMap<u32, String>,
 }
 
 impl MixDatabase {
     pub fn decode_dat(dat: &[u8]) -> Result<MixDatabase, Ra2Error> {
         let mut out = MixDatabase::default();
         let names = get_filenames_from_mix_db(dat);
-        for name in names.into_iter() {
-            out.add(name);
-        }
+        names.into_iter().for_each(|name| out.add(name));
         Ok(out)
     }
     #[cfg(feature = "serde_json")]
@@ -37,10 +35,18 @@ impl MixDatabase {
     pub fn encode_json(self) -> Result<String, Ra2Error> {
         Ok(serde_json::to_string(&self.map)?)
     }
+
+    pub fn save_toml(&self, path: &Path) -> Result<(), Ra2Error> {
+        let mut file = std::fs::File::create(path)?;
+        for (crc_id, filename) in &self.map {
+            writeln!(file, "{} = {:?}", crc_id, filename)?;
+        }
+        Ok(())
+    }
 }
 
 impl MixDatabase {
-    pub fn get(&self, crc_id: i32) -> Option<&String> {
+    pub fn get(&self, crc_id: u32) -> Option<&String> {
         self.map.get(&crc_id)
     }
     pub fn add(&mut self, filename: String) {

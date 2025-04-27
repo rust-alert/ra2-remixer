@@ -3,6 +3,8 @@
 #[cfg(feature = "image")]
 mod from_image;
 
+mod from_toml;
+
 use crate::Ra2Error;
 
 impl From<std::io::Error> for Ra2Error {

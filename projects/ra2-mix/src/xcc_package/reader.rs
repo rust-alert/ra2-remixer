@@ -49,7 +49,7 @@ fn get_file_entries(file_count: usize, index_data: &[u8]) -> Result<Vec<FileEntr
     let mut cursor = std::io::Cursor::new(index_data);
 
     for _ in 0..file_count {
-        let id = cursor.read_i32::<LittleEndian>()?;
+        let id = cursor.read_u32::<LittleEndian>()?;
         let offset = cursor.read_i32::<LittleEndian>()?;
         let size = cursor.read_i32::<LittleEndian>()?;
         file_entries.push(FileEntry { id, offset, size });
