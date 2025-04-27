@@ -1,0 +1,32 @@
+[package]
+name = "ra2-pcx"
+version = "0.0.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Parser for Red Alert 2 palette files (*.pcx)"
+categories = ["game-development"]
+homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-pal"
+repository = "https://github.com/rust-alert/ra2-remixer"
+documentation = "https://docs.rs/ra2-mix"
+readme = "readme.md"
+license = "MPL-2.0"
+edition = "2024"
+exclude = ["package.json", "tests/**"]
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
+image = { version = "0.25.6", features = []}
+
+[dependencies.ra2-types]
+version = "0.0.3"
+path = "../ra2-types"
+features = ["image", "walkdir"]
+
+[dev-dependencies]
+tempfile = "3.8"
+
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true

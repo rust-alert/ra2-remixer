@@ -231,7 +231,7 @@ pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
         match shp.get_frame(index as u64) {
             Ok(frame) => {
                 let dy = DynamicImage::ImageRgba8(frame.render(&palette, shp.animation_width(), shp.animation_height())?);
-                let png = apng::load_dynamic_image(dy).unwrap();
+                let png = apng::load_dynamic_image(dy)?;
                 png_images.push(png)
             }
             Err(e) => {
@@ -242,24 +242,24 @@ pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     let path = shp_path.with_extension("apng");
     let mut out = BufWriter::new(File::create(path)?);
     let config = apng::create_config(&png_images, None)?;
-    let mut encoder = apng::Encoder::new(&mut out, config).unwrap();
+    let mut encoder = apng::Encoder::new(&mut out, config)?;
     let frame = apng::Frame { delay_num: Some(1), delay_den: Some(24), ..Default::default() };
     encoder.encode_all(png_images, Some(&frame))?;
     Ok(())
 }
 
-/// Convert shp with same name pal to png
-/// 
-/// # Arguments 
-/// 
-/// * `root`: 
-/// 
-/// returns: Result<(), Ra2Error> 
-/// 
-/// # Examples 
-/// 
-/// ```
-/// 
+/// Convert `*.shp` with same `*.pal` name to png
+///
+/// # Arguments
+///
+/// * `root`: The root path of the game
+///
+/// # Examples
+///
+/// ```no_run
+/// # use std::path::Path;
+/// # use ra2_shp::shp_with_pal;
+/// shp_with_pal(Path::new("G:\\Red Alert 2 - Yuri's Revenge"))?;
 /// ```
 pub fn shp_with_pal(root: &Path) -> ra2_types::Result<()> {
     for entry in WalkDir::new(root) {
