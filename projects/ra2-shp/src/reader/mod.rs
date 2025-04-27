@@ -11,31 +11,94 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct ShpReader<R> {
+pub struct ShpReader {
     header: ShpHeader,
-    reader: BufReader<R>,
+    reader: BufReader<File>,
 }
 
-impl<R: Read> ShpReader<R> {
-    pub fn new(buffer: R) -> Result<Self, Ra2Error> {
-        let mut reader = BufReader::new(buffer);
+impl ShpReader {
+    /// Create a new shp reader from file or buffer
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer`:
+    ///
+    /// returns: Result<ShpReader<R>, Ra2Error>
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use ra2_shp::ShpReader;
+    /// let file = Path::new("ra2/conquer/engineer.shp");
+    /// let shp = ShpReader::new(file)?;
+    /// ```
+    pub fn new(file: &Path) -> Result<Self, Ra2Error> {
+        let file = File::open(file)?;
+        let mut reader = BufReader::new(file);
         let file_header = read_file_header(&mut reader)?;
         Ok(Self { header: file_header, reader })
     }
+    /// Count the frames in `sha` animation
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use ra2_shp::ShpReader;
+    /// let file = Path::new("ra2/conquer/engineer.shp");
+    /// let mut shp = ShpReader::new(file)?;
+    /// let frames = shp.animation_frames();
+    /// ```
     pub fn animation_frames(&self) -> u32 {
         self.header.number_of_frames as u32
     }
+    /// Get the max animation width in `sha` frames
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use ra2_shp::ShpReader;
+    /// let file = Path::new("ra2/conquer/engineer.shp");
+    /// let mut shp = ShpReader::new(file)?;
+    /// let width = shp.animation_width();
+    /// ```
     pub fn animation_width(&self) -> u32 {
         self.header.width as u32
     }
+    /// Get the max animation height in `sha` frames
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use ra2_shp::ShpReader;
+    /// let file = Path::new("ra2/conquer/engineer.shp");
+    /// let mut shp = ShpReader::new(file)?;
+    /// let width = shp.animation_height();
+    /// ```
     pub fn animation_height(&self) -> u32 {
         self.header.height as u32
     }
-
-    pub fn get_frame(&mut self, index: u64) -> Result<ShpFrame, Ra2Error>
-    where
-        R: Seek,
-    {
+    /// Get the raw `sha` frame buffer in `O(1)` time
+    ///
+    /// # Arguments
+    ///
+    /// * `index`:
+    ///
+    /// returns: Result<ShpFrame, Ra2Error>
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use ra2_shp::ShpReader;
+    /// let file = Path::new("ra2/conquer/engineer.shp");
+    /// let mut shp = ShpReader::new(file)?;
+    /// let idle = shp.get_frame(0);
+    /// ```
+    pub fn get_frame(&mut self, index: u64) -> Result<ShpFrame, Ra2Error> {
         self.reader.seek(SeekFrom::Start(8 + index * 24))?;
         let mut buffer = ShpFrame::default();
         buffer.read_frame_header(&mut self.reader)?;
@@ -138,7 +201,7 @@ pub fn decompress_rle_data<R: Read>(reader: &mut R, frame_width: u16, frame_heig
 pub fn shp2png(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     match file.extension() {
         Some(s) if s.eq("shp") => {
-            let mut shp = ShpReader::new(File::open(&file)?)?;
+            let mut shp = ShpReader::new(file)?;
             let frame = shp.get_frame(0)?;
             let image = frame.render(palette, shp.animation_width(), shp.animation_height())?;
             image.save(&file.with_extension("png"))?;
@@ -162,7 +225,7 @@ pub fn shp2png(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
 /// ```
 pub fn shp2apng(file: &Path, palette: &Palette) -> Result<(), Ra2Error> {
     let shp_path = Path::new(file);
-    let mut shp = ShpReader::new(File::open(shp_path)?)?;
+    let mut shp = ShpReader::new(shp_path)?;
     let mut png_images: Vec<PNGImage> = Vec::new();
     for index in 0..shp.animation_frames() {
         match shp.get_frame(index as u64) {

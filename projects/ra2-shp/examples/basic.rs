@@ -1,25 +1,17 @@
 //! Basic example of using RA2 MIX library
 
-use ra2_shp::ShpReader;
-use ra2_types::{Ra2Error};
-use std::fs::File;
 use ra2_pal::Palette;
+use ra2_shp::shp2png;
+use ra2_types::Ra2Error;
+use std::path::Path;
 
 fn main() -> Result<(), Ra2Error> {
-    let pal = include_bytes!(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\gls.pal"#);
-    // 打开文件
-    let file = File::open(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\glsl.shp"#)?;
-    let mut reader = ShpReader::new(file)?;
-
-    // 读取文件头
-    println!("File Header: {:?}", reader.header());
-
-    while let Ok(frame) = reader.read_frame() {
-        // 打印帧数据大小
-        println!("Frame Data Size: {} bytes", frame.buffer.len());
-        let image = frame.render(Palette::decode(pal)?)?;
-        image.save(r#"E:\Games\Red Alert 2 - Yuris Revenge\提取\glsl.png"#)?;
-    }
-
+    let root = Path::new("E:\\Games\\Red Alert 2 - Yuri's Revenge");
+    let pal = Palette::load(&root.join("ra2/local/gls.pal"))?;
+    shp2png(&root.join("ra2/local/glsl.shp"), &pal)?;
+    let pal = Palette::load(&root.join("langmd/glsmd.pal"))?;
+    shp2png(&root.join("langmd/glslmd.shp"), &pal)?;
+    let pal = Palette::load(&root.join("ra2md/ntrlmd/glsmd.pal"))?;
+    shp2png(&root.join("ra2md/ntrlmd/glslmd.shp"), &pal)?;
     Ok(())
 }

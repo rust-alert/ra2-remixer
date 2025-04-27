@@ -9,7 +9,7 @@ repository = "https://github.com/rust-alert/ra2-remixer"
 documentation = "https://docs.rs/ra2-mix"
 readme = "readme.md"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
@@ -23,7 +23,7 @@ num = "0.4.3"
 tracing = "0.1.41"
 
 [dependencies.ra2-types]
-version = "0.0.1"
+version = "0.0.2"
 path = "../ra2-types"
 
 [dev-dependencies]

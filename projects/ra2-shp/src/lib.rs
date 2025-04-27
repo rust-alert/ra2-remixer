@@ -14,7 +14,7 @@ mod reader;
 
 pub use crate::{
     frames::ShpFrame,
-    reader::{ShpReader, shp2png},
+    reader::{ShpReader, shp2apng, shp2png},
 };
 
 // 文件头结构体

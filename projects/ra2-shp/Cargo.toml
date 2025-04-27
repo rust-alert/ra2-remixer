@@ -1,15 +1,15 @@
 [package]
 name = "ra2-shp"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Aster <192607617@qq.com>"]
 description = "Parser for Red Alert 2 shape files (*.shp)"
 categories = ["game-development"]
-homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-mix"
+homepage = "https://github.com/rust-alert/ra2-remixer/tree/dev/projects/ra2-shp"
 repository = "https://github.com/rust-alert/ra2-remixer"
 documentation = "https://docs.rs/ra2-mix"
 readme = "readme.md"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
@@ -19,11 +19,11 @@ byteorder = { version = "1" }
 tracing = { version = "0" }
 
 [dependencies.ra2-pal]
-version = "0.0.1"
+version = "0.0.2"
 path = "../ra2-pal"
 
 [dependencies.ra2-types]
-version = "0.0.1"
+version = "0.0.2"
 path = "../ra2-types"
 features = ["image"]
 
